@@ -2,7 +2,7 @@
 const appName = "jdHouseKeeper";
 const destAppName = "京东"
 const jdPackageName="com.jingdong.app.mall"
-const execInterval = 10*60; //检查间隔时间，单位：秒
+const execInterval = 60; //检查间隔时间，单位：秒
 
 var shutdownFlag = threads.atomic();
 var storagelock = threads.lock();
@@ -11,23 +11,23 @@ var background = threads.disposable();
 
 Date.prototype.Format = function (fmt) {
     var o = {
-      'M+': this.getMonth() + 1,
-      'd+': this.getDate(),
-      'H+': this.getHours(),
-      'm+': this.getMinutes(),
-      's+': this.getSeconds(),
-      'S+': this.getMilliseconds()
+        'M+': this.getMonth() + 1,
+        'd+': this.getDate(),
+        'H+': this.getHours(),
+        'm+': this.getMinutes(),
+        's+': this.getSeconds(),
+        'S+': this.getMilliseconds()
     };
     //因为date.getFullYear()出来的结果是number类型的,所以为了让结果变成字符串型，下面有两种方法：
     if (/(y+)/.test(fmt)) {
-      //第一种：利用字符串连接符“+”给date.getFullYear()+''，加一个空字符串便可以将number类型转换成字符串。
-      fmt = fmt.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length));
+        //第一种：利用字符串连接符“+”给date.getFullYear()+''，加一个空字符串便可以将number类型转换成字符串。
+        fmt = fmt.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length));
     }
     for (var k in o) {
-      if (new RegExp('(' + k + ')').test(fmt)) {
-        //第二种：使用String()类型进行强制数据类型转换String(date.getFullYear())，这种更容易理解。
-        fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (('00' + o[k]).substr(String(o[k]).length)));
-      }
+        if (new RegExp('(' + k + ')').test(fmt)) {
+            //第二种：使用String()类型进行强制数据类型转换String(date.getFullYear())，这种更容易理解。
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (('00' + o[k]).substr(String(o[k]).length)));
+        }
     }
     return fmt;
 };
@@ -44,21 +44,21 @@ function safeGet(key) {
             }
         }
         return data;
-    }finally{
-        if(flag){
+    } finally {
+        if (flag) {
             storagelock.unlock();
         }
     }
 }
 function safeSet(key,stringValue) {
     var flag = false;
-    try{
+    try {
         flag = storagelock.tryLock();
         if (flag) {
             localStorages.put(key,stringValue);
         }
-    }finally{
-        if(flag){
+    } finally {
+        if (flag) {
             storagelock.unlock();
         }
     }
@@ -143,10 +143,10 @@ threads.start(function(){
     var flag = background.blockedGet();
 	log("启动京东管家主线程:");
     requestScreenCapture();
-    while(flag>0){
+    while (flag > 0) {
         try {
             var shutdown = shutdownFlag.get();
-            if (shutdown>0) {
+            if (shutdown > 0) {
                 toastLog("Exit script now...");
                 break;
             }
@@ -171,6 +171,7 @@ function queryList(json,arr) {
     }
     return arr;
 }
+
 function listAll(){
     sleep(3000);
     //var list = className("ListView").findOne();
@@ -183,7 +184,7 @@ function listAll(){
 }
 
 function findRootJDUi() {
-    var root = packageName(jdPackageName).className("FrameLayout").findOne(30000);
+    var root = packageName(jdPackageName).className("FrameLayout").findOne(1000);
     if (root == null) {
         toastLog("JD FrameLayout is not exist");
         return null;
@@ -204,35 +205,14 @@ function JudgeJDMainPage(){
     if (root == null) {
         return false;
     }
-    var frontPageTab = root.findOne(className("TextView").text("首页"));
-    if (frontPageTab == null) {
-        log("JudgeJDMainPage: 首页 tab not exist");
-        return false;
-    }
-    var newProductTab = root.findOne(className("TextView").text("新品"));
-    if (newProductTab == null) {
-        log("JudgeJDMainPage: 新品 tab not exist");
-        return false;
-    }
-    var cartTab = root.findOne(className("TextView").text("购物车"));
-    if (cartTab == null) {
-        log("JudgeJDMainPage: 购物车 tab not exist");
-        return false;
-    }
-    var mineTab = root.findOne(className("TextView").text("我的"));
-    if (mineTab == null) {
-        log("JudgeJDMainPage: 我的 tab not exist");
-        return false;
-    }
-    var getBean = root.findOne(className("TextView").text("领京豆"));
-    if (getBean == null) {
-        log("JudgeJDMainPage: 领京豆 not exist");
-        return false;
-    }
-    var freeFruit = root.findOne(className("TextView").text("免费水果"));
-    if (freeFruit == null) {
-        log("JudgeJDMainPage: 免费水果 not exist");
-        return false;
+
+    var tabNames = ["京东电器", "领京豆", "免费水果", "PLUS会员"];
+    for (var i = 0; i < tabNames.length; i++) {
+        var entry = root.findOne(className("TextView").text(tabNames[i]));
+        if (entry == null) {
+            log("JudgeJDMainPage: " + tabNames[i] + " not exist");
+            return false;
+        }
     }
     toastLog("JD main page");
     return true;
@@ -241,7 +221,7 @@ function JudgeJDMainPage(){
 function WaitForText(method, txt, sec) {
     var obj = null;
     for (var i = 0; i < sec && obj == null; i++) {
-        obj = eval(method + "(\"" + txt + "\").findOne(1000)");
+        obj = eval(method + "(\"" + txt + "\").visibleToUser(true).findOne(1000)");
         if (obj == null) {
             log("等待 " + txt + " 出现");
             sleep(1000);
@@ -253,7 +233,7 @@ function WaitForText(method, txt, sec) {
 function WaitForTextMatches(regex, sec) {
     var obj = null;
     for (var i = 0; i < sec && obj == null; i++) {
-        obj = eval(method + "(" + regex + ").findOne(1000)");
+        obj = eval("textMatches(" + regex + ").visibleToUser(true).findOne(1000)");
         if (obj == null) {
             log("等待 " + txt + " 出现");
             sleep(1000);
@@ -293,14 +273,15 @@ function getPlusDailyBean() {
         backJDMainPage();
         return;
     }
+
     var clickRet = click(mineTab.bounds().centerX(), mineTab.bounds().centerY() - mineTab.bounds().height());
-    log("点击 我的: " + clickRet + ", 并等待5s超时");
+    log("点击 我的: " + clickRet + ", 并等待30s超时");
     if (!clickRet) {
         backJDMainPage();
         return;
     }
 
-    var memberShop = WaitForText("text", "会员店", 5);
+    var memberShop = WaitForText("text", "会员店", 30);
     if (memberShop == null) {
         backJDMainPage();
         return;
@@ -308,9 +289,9 @@ function getPlusDailyBean() {
 
     var bound = memberShop.parent().parent().parent().bounds();
     clickRet = click(bound.centerX(), bound.centerY());
-    log("点击 会员店: " + clickRet + ", 并等待5s超时");
+    log("点击 会员店: " + clickRet + ", 并等待30s超时");
 
-    memberShop = WaitForText("text", "会员定制", 5);
+    memberShop = WaitForText("text", "会员定制", 30);
     if (memberShop == null) {
         backJDMainPage();
         return;
@@ -325,13 +306,13 @@ function getPlusDailyBean() {
     }
 
 //    clickRet = click(getBeanBtn[0].bounds().centerX(), getBeanBtn[0].bounds().centerY());
-    log("点击 天天领京豆: " + getBeanBtn[0].click() + ", 并等待5s超时");
+    log("点击 天天领京豆: " + getBeanBtn[0].click() + ", 并等待30s超时");
     if (!clickRet) {
         backJDMainPage();
         return;
     }
 
-    memberShop = WaitForText("text", "连续签到，赢大额京豆", 5);
+    memberShop = WaitForText("text", "连续签到，赢大额京豆", 30);
     if (memberShop == null) {
         backJDMainPage();
         return;
@@ -493,6 +474,11 @@ function doPickupMerchantTasks(tasklist) {
                 sleep(3000);
                 break;
             }
+
+            //可能上的不是一般商品了
+            if (l == 10) {
+                throw "doPickupMerchantTasks: 非正常商品"
+            }
             WaitDismiss("text", "收藏", 10);
             //从右向左滑动
             swipe(device.width * 3 / 4, device.height / 2, device.width / 4, device.height / 2, 500);
@@ -650,6 +636,16 @@ function doSubscibeChannelTasks(tasklist) {
     return ret;
 }
 
+function filterTaskList(todoTasks, validTaskNames) {
+    var ret = [];
+    for (var i = 0; i < todoTasks.length; i++) {
+        if (validTaskNames.indexOf(todoTasks[i].Title) != -1) {
+            ret.push(todoTasks[i]);
+        }
+    }
+    return ret;
+}
+
 //宠汪汪每日任务
 function doPetDailyTasks() {
     // 我的-> 宠汪汪
@@ -697,32 +693,33 @@ function doPetDailyTasks() {
     clickRet = click(device.width / 2, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
     log("点击 领狗粮: " + clickRet + ", 并等待10s超时");
 
-    petBtn = WaitForText("textContains", "做任务得狗粮", 10);
-    if (petBtn == null) {
-        backJDMainPage();
-        return;
-    }
-
-    sleep(3000);
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     // 除了去邀请以及两个去签到任务以外其他都做完了就算完成
     for (;;) {    
+        petBtn = WaitForText("textContains", "做任务得狗粮", 10);
+        if (petBtn == null) {
+            backJDMainPage();
+            return;
+        }
+
+        sleep(3000);
         var oneWalkTaskList = [];  //逛逛会场、关注商品任务列表，待够时间回来
         var subscribeShopTaskList = []; //关注店铺任务列表
         var subscribeChannelTaskList = []; //关注频道任务列表
-        var signGetBeanTaskList = [];  //签到领京豆
-        var signJDDianqiTaskList = [];  //京东电器签到
-        var feedTaskList = [];  //帮好友喂狗粮
-        var tips = textMatches(/.*[奖励|得]\d+g狗粮|.*可领\d+g狗粮.*/).find();
-        log("任务数: " + tips.length);
-        if (tips.length == 0) {
-            backJDMainPage();
-            continue;
-        }
+        var totalTasks = textMatches(/.*[奖励|得]\d+g狗粮|.*可领\d+g狗粮.*/).find();
+        var validTasks = textMatches(/.*[奖励|得]\d+g狗粮|.*可领\d+g狗粮.*/).visibleToUser(true).find();
 
-        tips.forEach(function(tv) {
+        var validTaskNames = [];
+        for (var i = 0; i < validTasks.length; i++) {
             var objs = [];
-            queryList(tv.parent(), objs);
+            queryList(validTasks[i].parent(), objs);
+            validTaskNames.push(objs[1].text());
+        }
+        toastLog("任务数: " + totalTasks.length + ", 可见: " + validTasks.length + ", " + validTaskNames);
+
+        for (var i = 0; i < totalTasks.length; i++) {
+            var objs = [];
+            queryList(totalTasks[i].parent(), objs);
             if (objs[3].text() != "去邀请" && 
                 objs[3].text() != "去参与" && 
                 objs[3].text() != "明天再来" &&
@@ -738,41 +735,43 @@ function doPetDailyTasks() {
                     subscribeShopTaskList.push(obj);
                 } else if (obj.Title.indexOf("关注频道") != -1) {
                     subscribeChannelTaskList.push(obj);
-                } else if (obj.Title == "签到领京豆") {
-                    signGetBeanTaskList.push(obj);
-                } else if (obj.Title.indexOf("京东电器") != -1) {
-                    signJDDianqiTaskList.push(obj);
                 } else if (obj.Title.indexOf("帮好友") != -1) {
                     feedTaskList.push(obj);
                 } else if (obj.Title.indexOf("逛逛会场") != -1 || obj.Title.indexOf("关注商品") != -1) {
                     oneWalkTaskList.push(obj);
                 }
-                log("未完成任务" + (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length + signGetBeanTaskList.length + signJDDianqiTaskList.length + feedTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + ")");
+                log("未完成任务" + (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + ")");
             } else {
                 log("跳过任务: " + objs[1].text() + ", " + objs[3].text());
             }
-        });
-    
-        if (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length + signGetBeanTaskList.length + signJDDianqiTaskList.length + feedTaskList.length == 0) {
+        }
+
+        if (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length == 0) {
             safeSet(nowDate + ":宠汪汪每日任务", "done");
             toastLog("完成 宠汪汪每日任务");
             break;
         }
 
+        oneWalkTaskList = filterTaskList(oneWalkTaskList, validTaskNames)
         if (doOneWalkTasks(oneWalkTaskList)) {
             sleep(5000);
             continue;
         }
 
+        subscribeShopTaskList = filterTaskList(subscribeShopTaskList, validTaskNames)
         if (doWalkShopTasks(subscribeShopTaskList)) {
             sleep(5000);
             continue;
         }
 
+        subscribeChannelTaskList = filterTaskList(subscribeChannelTaskList, validTaskNames)
         if (doSubscibeChannelTasks(subscribeChannelTaskList)) {
             sleep(5000);
             continue;
         }
+
+        log("往上划动半个屏幕: " + swipe(device.width / 2, device.height * 3 / 4, device.width / 2, device.height / 4, 300));
+        sleep(1000);
 
         // doPickupMerchantTasks(pickupMerchantTaskList);
         // 任务列表关闭按钮坐标
@@ -793,21 +792,22 @@ function doPetRoutineTasks() {
         return;
     }
     var clickRet = click(mineTab.bounds().centerX(), mineTab.bounds().centerY() - mineTab.bounds().height());
-    log("点击 我的: " + clickRet + ", 并等待5s超时");
+    log("点击 我的: " + clickRet + ", 并等待10s超时");
     if (!clickRet) {
         backJDMainPage();
         return;
     }
+    sleep(1000)
 
-    var petBtn = WaitForText("text", "宠汪汪", 5);
+    var petBtn = WaitForText("text", "宠汪汪", 10);
     if (petBtn == null) {
         backJDMainPage();
         return;
     }
 
-    sleep(3000);
     clickRet = click(petBtn.bounds().centerX(), petBtn.bounds().centerY() - petBtn.bounds().height());
     log("点击 宠汪汪: " + clickRet + ", 并等待10s超时");
+    sleep(1000);
 
     petBtn = WaitForText("text", "积分超值兑换", 10);
     if (petBtn == null) {
@@ -816,8 +816,8 @@ function doPetRoutineTasks() {
     }
 
     sleep(3000);
+    //狗粮吃完了自动喂狗粮
     if (textMatches(/\d+小时\d+分\d+秒/).find().length == 0) {
-        //狗粮吃完了
         clickRet = click(device.width * 5 / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
         log("点击 喂养: " + clickRet);
         textContains("消耗").waitFor();
@@ -834,6 +834,7 @@ function doPetRoutineTasks() {
 
         clickRet = click(feed.bounds().centerX(), feed.bounds().centerY());
         log("点击 确定喂养: " + clickRet);
+        sleep(1000);
 
         backJDMainPage();
         return;
@@ -844,10 +845,13 @@ function doPetRoutineTasks() {
     // 喂养：click(device.width * 5 / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
     // 帮忙喂养-> 回家：click(100, device.height - 250)
     // 帮忙喂养-> 帮ta喂养：click(device.width - 100, device.height - 250)
+
+    //领取任务达标获得的狗粮，例如三餐、帮朋友喂狗粮
     clickRet = click(device.width / 2, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
     log("点击 领狗粮: " + clickRet + ", 并等待10s超时");
+    sleep(2000);
 
-    petBtn = WaitForText("textContains", "做任务得狗粮", 10);
+    petBtn = WaitForTextMatches(/做任务得狗粮.*/, 10);
     if (petBtn == null) {
         backJDMainPage();
         return;
@@ -859,7 +863,7 @@ function doPetRoutineTasks() {
         var totalGetBtns = text("领取").find();
         var validGetBtns = text("领取").visibleToUser(true).find();
 
-        log("进入并关注: " + totalGetBtns.length + ", 可视: " + validGetBtns.length);
+        log("领取: " + totalGetBtns.length + ", 可视: " + validGetBtns.length);
         if (totalGetBtns.length == validGetBtns.length && totalGetBtns.length == 0) {
             break;
         }
@@ -867,6 +871,8 @@ function doPetRoutineTasks() {
         if (validGetBtns.length > 0) {
             var getBtn = validGetBtns[0];
             toastLog("点击 领取: " + click(getBtn.bounds().centerX(), getBtn.bounds().centerY()));
+            sleep(1000);
+            break;
         } else {
             log("往上划动半个屏幕: " + swipe(device.width / 2, device.height * 3 / 4, device.width / 2, device.height / 4, 300));
             sleep(1000);
@@ -891,7 +897,7 @@ function doubleClick(ctext,index){
 // 多次判断是否进入主页，避免网络延时导致问题
 function loopJudgeJDMainPage(sleepTime) {
     var trytimes = 0;
-    while (trytimes < 3) {
+    while (trytimes < 10) {
         var isLoged = JudgeJDMainPage();
         if (isLoged) {
             return true;
@@ -903,9 +909,10 @@ function loopJudgeJDMainPage(sleepTime) {
 }
 
 function backJDMainPage(){
+    log("backJDMainPage");
 	try{
 		var trytimes = 0;
-		while (trytimes < 3)
+		while (trytimes < 10)
 		{
 			result = JudgeJDMainPage()
 			if (result){
@@ -927,6 +934,7 @@ function backJDMainPage(){
 
 function mainWorker() {
 	try{
+        log("launchApp: " + destAppName);
 		app.launchApp(destAppName);
 		var isLoged = loopJudgeJDMainPage(6000);
 		if (!isLoged) {
@@ -1002,16 +1010,15 @@ function mainWorker() {
 			}
 */
         }
+	} catch(e) {
+		console.error("mainWorker",e);
+    } finally {
 		backJDMainPage();
 		home();
 		toastLog("Back home success");
 		sleep(3000);
 		//stopApp(jdPackageName);
 		toastLog("finish mainWorker loop");
-	} catch(e) {
-		console.error("mainWorker",e);
-	} finally {
-        backJDMainPage();
     }
 }
 
