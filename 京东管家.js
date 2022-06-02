@@ -155,8 +155,10 @@ threads.start(function(){
         } catch(e) {
             console.error("main err ",e);
         }
-        log(execInterval + "s后进行下一次执行");
-        sleep(execInterval*1000);
+        if (isAllDailyTaskComplete()) {
+            log(execInterval + "s后进行下一次执行");
+            sleep(execInterval*1000);
+        }
     }
 });
 
@@ -206,7 +208,7 @@ function JudgeJDMainPage(){
         return false;
     }
 
-    var tabNames = ["京东电器", "领京豆", "免费水果", "PLUS会员"];
+    var tabNames = ["京东电器", "领京豆", "我的", "PLUS会员"];
     for (var i = 0; i < tabNames.length; i++) {
         var entry = root.findOne(className("TextView").text(tabNames[i]));
         if (entry == null) {
@@ -224,7 +226,6 @@ function WaitForText(method, txt, sec) {
         obj = eval(method + "(\"" + txt + "\").visibleToUser(true).findOne(1000)");
         if (obj == null) {
             log("等待 " + txt + " 出现");
-            sleep(1000);
         }
     }
     return obj;
@@ -235,8 +236,7 @@ function WaitForTextMatches(regex, sec) {
     for (var i = 0; i < sec && obj == null; i++) {
         obj = eval("textMatches(" + regex + ").visibleToUser(true).findOne(1000)");
         if (obj == null) {
-            log("等待 " + txt + " 出现");
-            sleep(1000);
+            log("等待 " + regex + " 出现");
         }
     }
     return obj;
@@ -252,7 +252,6 @@ function WaitDismiss(method, txt, sec) {
             log("等待 " + txt + " 消失");
             return false;
         }
-        sleep(1000);
     }
     return true;
 }
@@ -291,7 +290,7 @@ function getPlusDailyBean() {
     clickRet = click(bound.centerX(), bound.centerY());
     log("点击 会员店: " + clickRet + ", 并等待30s超时");
 
-    memberShop = WaitForText("text", "会员定制", 30);
+    memberShop = WaitForText("text", "立即抢购", 30);
     if (memberShop == null) {
         backJDMainPage();
         return;
@@ -299,14 +298,15 @@ function getPlusDailyBean() {
 
     //等待天天领京豆banner加载
     sleep(1000);
-    var getBeanBtn = packageName(jdPackageName).className("android.view.View").depth(13).drawingOrder(0).indexInParent(1).find();
-    if (getBeanBtn.length != 1){
-        toastLog("天天领京豆 not exist");
-        return false;
-    }
+//     var getBeanBtn = packageName(jdPackageName).className("android.view.View").depth(13).drawingOrder(0).indexInParent(1).find();
+//     if (getBeanBtn.length != 1){
+//         toastLog("天天领京豆 not exist");
+//         return false;
+//     }
 
-//    clickRet = click(getBeanBtn[0].bounds().centerX(), getBeanBtn[0].bounds().centerY());
-    log("点击 天天领京豆: " + getBeanBtn[0].click() + ", 并等待30s超时");
+// //    clickRet = click(getBeanBtn[0].bounds().centerX(), getBeanBtn[0].bounds().centerY());
+//     log("点击 天天领京豆: " + getBeanBtn[0].click() + ", 并等待30s超时");
+    clickRet = click(device.width - memberShop.bounds().left, memberShop.bounds().top - memberShop.bounds().height() * 6);
     if (!clickRet) {
         backJDMainPage();
         return;
@@ -413,7 +413,7 @@ function doWalkShopTasks(tasklist) {
             WaitDismiss("text", "进店并关注", 10);
             sleep(5000);
             //取消关注
-            var btnSubscribe = id("com.jd.lib.jshop.feature:id/s8").findOne(3000);
+            var btnSubscribe = id("com.jd.lib.jshop.feature:id/sb").findOne(3000);
             if (btnSubscribe != null) {
                 log("点击 已关注: " + btnSubscribe.click());
                 sleep(1000);
@@ -520,9 +520,10 @@ function doBeanDailyTasks() {
     }
 
     // 定位 升级赚京豆 红色按钮
-    packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).waitFor();
-    var upgradeEarnBean = packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).find();
-    log("点击 种豆得豆: " + click(upgradeEarnBean[0].bounds().centerX() + device.width / 2 - 30, upgradeEarnBean[0].bounds().centerY()));
+    // packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).waitFor();
+    // var upgradeEarnBean = packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).find();
+    // log("点击 种豆得豆: " + click(upgradeEarnBean[0].bounds().centerX() + device.width / 2 - 30, upgradeEarnBean[0].bounds().centerY()));
+    log("点击 种豆得豆: " + click(getJDBean.bounds().left, getJDBean.bounds().centerY() + getJDBean.bounds().height() * 16));
     var moreTasks = WaitForText("textContains", "更多任务", 5);
     if (moreTasks == null) {
         backJDMainPage();
@@ -541,6 +542,11 @@ function doBeanDailyTasks() {
         var walkShopTaskList = [];  //浏览店铺，需要多次折返
         var pickupMerchantTaskList = [];  //挑选商品
         var tips = textMatches(/已获得\d+\/\d+瓶/).find();
+        log("总任务数: " + tips.length);
+        if (tips.length == 0) {
+            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            break;
+        }
         tips.forEach(function(tv) {
             var objs = [];
             queryList(tv.parent().parent(), objs);
@@ -568,7 +574,7 @@ function doBeanDailyTasks() {
             }
         });
     
-        if (oneWalkTaskList.length + subscribeTaskList.length + walkShopTaskList.length + pickupMerchantTaskList.length == 0) {
+        if (oneWalkTaskList.length + subscribeTaskList.length + walkShopTaskList.length + pickupMerchantTaskList.length == 0 && tips.length != 0) {
             safeSet(nowDate + ":种豆得豆每日任务", "done");
             toastLog("完成 种豆得豆每日任务");
             break;
@@ -591,6 +597,91 @@ function doBeanDailyTasks() {
         // var bound = textContains("当前通过任务获得").findOne(1000).bounds();
         // log("关闭任务列表: " + click(device.width - 60, bound.centerY() - 88));
         //break;
+    }
+
+    backJDMainPage();
+}
+
+//升级赚京豆每日任务
+function doUpgradeEarnBeanDailyTasks() {
+    // 领京豆-> 升级赚京豆
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = safeGet(nowDate + ":升级赚京豆每日任务");
+    if (done != null) {
+        log("升级赚京豆每日任务 已做: " + done);
+        return;
+    }
+
+    var getJDBean = text("领京豆").packageName(jdPackageName).findOne(30000);
+    if (getJDBean == null){
+        toastLog("领京豆 not exist");
+        backJDMainPage();
+        return;
+    }
+
+    var clickRet = click(getJDBean.bounds().centerX(), getJDBean.bounds().centerY() - getJDBean.bounds().height());
+    log("点击 领京豆: " + clickRet + ", 并等待5s超时");
+    if (!clickRet) {
+        backJDMainPage();
+        return;
+    }
+
+    getJDBean = WaitForText("text", "规则", 5);
+    if (getJDBean == null) {
+        backJDMainPage();
+        return;
+    }
+
+    // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
+    // 除了双签领豆任务以外其他都做完了就算完成
+    for (;;) {
+        // 定位 升级赚京豆 红色按钮
+        packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).waitFor();
+        var upgradeEarnBean = packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).find();
+        log("点击 升级赚京豆: " + click(upgradeEarnBean[0].bounds().centerX(), upgradeEarnBean[0].bounds().centerY()));
+        sleep(2000);
+        var upgradeTasks = WaitForTextMatches(/做任务再升一级.*/, 5);
+        if (upgradeTasks == null) {
+            backJDMainPage();
+            return;
+        }
+
+        var oneWalkTaskList = [];  //去逛逛任务列表，待够时间回来
+        var tips = textMatches(/.*\(\d\/\d\).*/).find();
+        log("总任务数: " + tips.length);
+        if (tips.length == 0) {
+            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            break;
+        }
+        tips.forEach(function(tv) {
+            var objs = [];
+            queryList(tv.parent().parent(), objs);
+            if (/*objs[1].text().indexOf("双签领豆") == -1 && */objs[5].text() != "已完成" && /升级.*会员.*/.test(objs[1].text()) == false) {
+                var obj = {};
+                obj.Title = objs[1].text();
+                obj.Tips = objs[2].text();
+                obj.BtnName = objs[5].text();
+                obj.Button = objs[5];
+                oneWalkTaskList.push(obj);
+                log("未完成任务" + oneWalkTaskList.length + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + ")");
+            } else {
+                log("跳过任务: " + objs[1].text() + ", " + objs[2].text() + ", " + objs[5].text());
+            }
+        });
+
+        if (oneWalkTaskList.length == 0) {
+            safeSet(nowDate + ":升级赚京豆每日任务", "done");
+            toastLog("完成 升级赚京豆每日任务");
+            break;
+        }
+
+        if (doOneWalkTasks(oneWalkTaskList)) {
+            sleep(2000);
+            continue;
+        }
+
+        // 任务列表关闭按钮坐标
+        log("关闭升级赚京豆任务列表: " + click(device.width - 60, upgradeTasks[0].bounds().top - upgradeTasks[0].bounds().height() * 7));
     }
 
     backJDMainPage();
@@ -783,6 +874,143 @@ function doPetDailyTasks() {
     backJDMainPage();
 }
 
+//东东农场每日浇水
+function doWateringTasks(tasklist) {
+    for (var i = 0; i < tasklist.length; i++) {
+        toastLog("点击 " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
+        sleep(1000);
+        //点鸭子
+        var btn1 = textContains("包邮送到家").findOne(1000);
+        if (btn1 != null) {
+            for (var i = 0; i < 5; i++) {
+                log("点鸭子: " + click(btn1.bounds().centerX(), btn1.bounds().centerY() - btn1.bounds().height() * 4));
+                sleep(50);
+            }
+        }
+        sleep(8000);
+        var btn = textContains("鸭").findOne(1000);
+        if (btn != null) {
+            log("点关闭: " + click(btn.bounds().centerX(), btn.bounds().centerY() + btn.bounds().height() * 14));
+        } else {
+            log("close btn not found");
+        }
+    }
+
+}
+//东东农场每日任务
+function doFarmDailyTasks() {
+    // 免费水果-> 领水滴
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = safeGet(nowDate + ":东东农场每日任务");
+    if (done != null) {
+        log("东东农场每日任务 已做: " + done);
+        return;
+    }
+
+    var freeFruit = textMatches(/.*水果.*/).packageName(jdPackageName).findOne(30000);
+    if (freeFruit == null){
+        toastLog("免费水果 not exist");
+        backJDMainPage();
+        return;
+    }
+
+    var clickRet = click(freeFruit.bounds().centerX(), freeFruit.bounds().centerY() - freeFruit.bounds().height());
+    log("点击 " + freeFruit.text() + ": " + clickRet + ", 并等待10s超时");
+    if (!clickRet) {
+        backJDMainPage();
+        return;
+    }
+
+    freeFruit = WaitForTextMatches(/.*包邮送到家/, 10);
+    if (freeFruit == null) {
+        backJDMainPage();
+        return;
+    }
+
+    // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
+    // 除了双签领豆任务以外其他都做完了就算完成
+    for (;;) {
+        clickRet = click(device.width / 4, freeFruit.bounds().bottom + freeFruit.bounds().height() * 3);
+        log("点击 领水滴: " + clickRet + ", 并等待10s超时");
+        sleep(2000);
+        var shuidiTasks = WaitForTextMatches(/领水滴/, 5);
+        if (shuidiTasks == null) {
+            break;
+        }
+
+        var dones = textMatches(/去领取|领取/).visibleToUser(true).find();
+        if (dones.length != 0) {
+            var objs = [];
+            queryList(dones[0].parent(), objs);
+            log("领取水滴: " + dones.length + ", " + click(objs[3].bounds().centerX(), objs[3].bounds().centerY()));
+            sleep(1000);
+            // 领取后任务列表有变不能点击旧的坐标
+            // 任务列表关闭按钮坐标
+            log("关闭领水滴任务列表: " + click(device.width - 30, shuidiTasks.bounds().centerY()));
+            sleep(1000);
+            continue;
+        }
+
+        var oneWalkTaskList = [];  //去逛逛任务列表，待够时间回来
+        var wateringTaskList = [];  //每日浇水10次任务列表
+        var tips = textMatches(/.*奖励\d+g水滴.*/).find();
+        log("总任务数: " + tips.length);
+        if (tips.length == 0) {
+            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            break;
+        }
+
+        tips.forEach(function(tv) {
+            var objs = [];
+            queryList(tv.parent(), objs);
+            if (objs[4].text() != "已完成" &&
+                objs[4].text() != "再逛逛" &&
+                objs[4].text() != "已收集" &&
+                objs[4].text() != "已领取" &&
+                objs[4].text() != "明日再来" &&
+                objs[1].text() != "帮2位好友浇水" &&
+                objs[1].text().indexOf("专属特惠") == -1) {
+                var obj = {};
+                obj.Title = objs[1].text();
+                obj.Tips = objs[2].text();
+                obj.BtnName = objs[4].text();
+                obj.Button = objs[4];
+                if (obj.Title != "每日累计浇水10次") {
+                    oneWalkTaskList.push(obj);
+                } else {
+                    wateringTaskList.push(obj);
+                }
+                log("未完成任务" + (oneWalkTaskList.length + wateringTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + ")");
+            } else {
+                log("跳过任务: " + objs[1].text() + ", " + objs[2].text() + ", " + objs[4].text());
+            }
+        });
+
+        if (oneWalkTaskList.length + wateringTaskList.length == 0) {
+            safeSet(nowDate + ":东东农场每日任务", "done");
+            toastLog("完成 东东农场每日任务");
+            break;
+        }
+
+        if (doOneWalkTasks(oneWalkTaskList)) {
+            log("关闭领水滴任务列表: " + click(device.width - 30, shuidiTasks.bounds().centerY()));
+            sleep(1000);
+            continue;
+        }
+
+        if (doWateringTasks(wateringTaskList)) {
+            //浇水任务不需要关闭任务列表，它自己会关闭
+            continue;
+        }
+
+        // 任务列表关闭按钮坐标
+        log("关闭领水滴任务列表: " + click(device.width - 30, shuidiTasks.bounds().centerY()));
+        sleep(2000);
+    }
+
+    backJDMainPage();
+}
+
 function doPetRoutineTasks() {
     // 我的-> 宠汪汪
     var mineTab = text("我的").packageName(jdPackageName).findOne(30000);
@@ -817,7 +1045,8 @@ function doPetRoutineTasks() {
 
     sleep(3000);
     //狗粮吃完了自动喂狗粮
-    if (textMatches(/\d+小时\d+分\d+秒/).find().length == 0) {
+    var dogFood = textMatches(/\d+小时\d+分\d+秒/).find()
+    if (dogFood.length == 0) {
         clickRet = click(device.width * 5 / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
         log("点击 喂养: " + clickRet);
         textContains("消耗").waitFor();
@@ -838,6 +1067,8 @@ function doPetRoutineTasks() {
 
         backJDMainPage();
         return;
+    } else {
+        log("狗粮剩余时间: " + dogFood[0].text());
     }
     // 帮忙喂养：click(device.width / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
     // 汪汪大比拼：click(device.width / 5, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
@@ -932,6 +1163,19 @@ function backJDMainPage(){
 	}
 }
 
+function isAllDailyTaskComplete() {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var taskList = [":京东会员每日领京豆", ":种豆得豆每日任务", ":升级赚京豆每日任务", ":宠汪汪每日任务", ":东东农场每日任务"];
+    for (var i = 0; i < taskList.length; i++) {
+        var done = safeGet(nowDate + taskList[i]);
+        if (done == null) {
+            log("isAllDailyTaskComplete: " + nowDate + taskList[i] + " 未完成");
+            return false;
+        }
+    }
+    return true;
+}
+
 function mainWorker() {
 	try{
         log("launchApp: " + destAppName);
@@ -945,6 +1189,10 @@ function mainWorker() {
             getPlusDailyBean();
             // 领京豆-> 种豆得豆-> 更多任务，每日一次
             doBeanDailyTasks();
+            // 领京豆-> 升级赚京豆，每日一次
+            doUpgradeEarnBeanDailyTasks();
+            // 免费水果-> 领水滴，每日一次
+            doFarmDailyTasks();
             // 我的-> 宠汪汪
             doPetDailyTasks();
             doPetRoutineTasks();
