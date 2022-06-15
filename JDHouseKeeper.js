@@ -139,40 +139,27 @@ threads.start(function(){
         var allComplete = isAllDailyTaskComplete();
         log("isAllDailyTaskComplete: " + allComplete + ", mainWorker return: " + ret);
         if (allComplete && ret) {
-            log(execInterval + "s后进行下一次执行");
-            sleep(execInterval*1000);
+            var now = new Date().getTime();
+            var nextGetBeanCheckTS = parseInt(common.safeGet(common.nextGetBeanTimestampTag));
+            var nextGetDogFoodCheckTS = parseInt(common.safeGet(common.nextGetDogFoodTimestampTag));
+            var nextPeriodCheckTS = parseInt((now + execInterval * 1000) / (execInterval * 1000)) * (execInterval * 1000);
+            log(common.nextGetBeanTimestampTag + ": " + common.timestampToTime(nextGetBeanCheckTS) + ", " +
+                common.nextGetDogFoodTimestampTag + ": " + common.timestampToTime(nextGetDogFoodCheckTS) + ", " +
+                "下周期检查时间戳: " + common.timestampToTime(nextPeriodCheckTS));
+
+            var finalNextCheckTS = nextPeriodCheckTS;
+            if (!isNaN(nextGetBeanCheckTS) && now < nextGetBeanCheckTS) {
+                finalNextCheckTS = Math.min(finalNextCheckTS, nextGetBeanCheckTS);
+            }
+            if (!isNaN(nextGetDogFoodCheckTS) && now < nextGetDogFoodCheckTS) {
+                finalNextCheckTS = Math.min(finalNextCheckTS, nextGetDogFoodCheckTS);
+            }
+
+            toastLog(Math.floor((finalNextCheckTS - now) / 1000) + "s 后的 " + common.timestampToTime(finalNextCheckTS) + " 进行下一次检查");
+            sleep(finalNextCheckTS - now);
         }
     }
 });
-
-//种豆得豆去逛逛任务
-function doOneWalkTasks(tasklist) {
-    var ret = false;
-    for (var i = 0; i < tasklist.length; i++) {
-        toastLog("点击 " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
-        // 等待离开任务列表页面
-        if (!WaitDismiss("text", tasklist[i].BtnName, 10)) {
-            log("等待 " + tasklist[i].Title + " 浏览完成");
-            for (var j = 0; j < 10; j++) {
-                var curPkg = currentPackage();
-                if (curPkg != jdPackageName) {
-                    //跳其他app了要跳回来
-                    log("currentPackage(): " + curPkg);
-                    app.startActivity({
-                        action: "VIEW",
-                        data: 'openApp.jdMobile://virtual'
-                    })
-                }
-                sleep(1000);
-            }
-            //回到"更多任务"列表
-            back();
-            ret = true;
-            break;
-        }
-    }
-    return ret;
-}
 
 function doBeanRoutineTasks() {
     toastLog("doBeanRoutineTasks");
@@ -639,6 +626,8 @@ function mainWorker() {
             // 领京豆-> 升级赚京豆
             bean.doUpgradeBeans();
 
+            // 领京豆-> 种豆得豆，周期去做
+            bean.doRoutine();
             // // 领京豆-> 种豆得豆-> 更多任务，每日一次
             // doBeanDailyTasks();
             // // 领京豆-> 升级赚京豆，每日一次

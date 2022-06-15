@@ -4,13 +4,9 @@ common.appName = "JDHouseKeeper";
 common.destAppName = "京东";
 common.destPackageName = "com.jingdong.app.mall";
 
-//收益正常才允许每日首次进入，否则元宝只有1/10，首次进入后后面随意进出
-common.walkToEarnPermissionTag = "走路赚元宝准入";
-
-//走路与打工的视频直播观看任务需要在签到、睡觉、成功打工、摇一摇视频直播任务之后才能执行
-//Min(下一次走路赚元宝领能量饮料, 下一次打工赚元宝领体力, 下一个整点检查时间戳)
-common.nextWalkCheckTimestampTag = "下一次能量饮料检查时间戳";  //带毫秒
-common.nextWorkCheckTimestampTag = "下一次体力领取检查时间戳";  //带毫秒
+//Min(下一次收取京豆检查时间戳, 下一次领取狗粮检查时间戳, 下一个整点检查时间戳)
+common.nextGetBeanTimestampTag = "下一次收取京豆检查时间戳";  //带毫秒
+common.nextGetDogFoodTimestampTag = "下一次领取狗粮检查时间戳";  //带毫秒
 
 var storagelock = threads.lock();
 var localStorages = storages.create(common.appName+":global");

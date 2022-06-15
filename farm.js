@@ -443,11 +443,23 @@ farm.doPeriodGetDrops = function () {
             break;
         }
 
+        var taskListCloseBtn = taskListTips.parent().parent().child(taskListTips.parent().parent().childCount() - 1);
         var dones = textMatches(/去领取|领取/).visibleToUser(true).find();
         log("可领取: " + dones.length);
         if (dones.length != 0) {
             log("领取水滴: " + click(dones[0].bounds().centerX(), dones[0].bounds().centerY()));
             sleep(1000);
+
+            if (inTheMorning) {
+                common.safeSet(nowDate + ":" + morningGetDropsTag, "done");
+                toastLog("完成 " + morningGetDropsTag);
+            } else if (atNoon) {
+                common.safeSet(nowDate + ":" + noonGetDropsTag, "done");
+                toastLog("完成 " + noonGetDropsTag);
+            } else if (atNight) {
+                common.safeSet(nowDate + ":" + nightGetDropsTag, "done");
+                toastLog("完成 " + nightGetDropsTag);
+            }
 
             // 领取后任务列表有变不能点击旧的坐标
             // 任务列表关闭按钮坐标

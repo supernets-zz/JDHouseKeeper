@@ -378,224 +378,121 @@ bean.doUpgradeBeans = function () {
     commonAction.backToAppMainPage();
 }
 
-bean.doGetDrops = function () {
-    log("bean.doGetDrops");
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var done = common.safeGet(nowDate + ":" + getDropsTag);
-    if (done != null) {
-        log(getDropsTag + " 已做: " + done);
-        return;
-    }
-
-    toast("bean.doGetDrops");
-    // 免费水果-> 左上角签到-> 立即翻牌，每日一次
+bean.doRoutine = function () {
+    toastLog("bean.doRoutine");
+    // 领京豆-> 种豆得豆
     var actionBar = gotoBean();
     if (actionBar == null) {
         commonAction.backToAppMainPage();
         return;
     }
 
-    var getDropsBtn = actionBar.child(actionBar.childCount() - 2).child(1);
-    var duckBtn = actionBar.child(4).child(0);
-    // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
-    // 除了双签领豆任务以外其他都做完了就算完成
+    var plantBeanBtn = actionBar.child(actionBar.childCount() - 1);
+    var clickRet = click(plantBeanBtn.bounds().centerX(), plantBeanBtn.bounds().centerY());
+    log("点击 种豆得豆: " + clickRet + ", 并等待 豆苗成长值 出现, 15s超时");
+
+    var growthTips = common.waitForText("text", "豆苗成长值", true, 15);
+    if (growthTips == null) {
+        commonAction.backToAppMainPage();
+        return;
+    }
+
+    // 领完营养液后会刷新，需要重新获取一下可领营养液
+    // 除了去邀请以及两个去签到任务以外其他都做完了就算完成
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    var newNextGetBeanCheckTimestamp = new Date(tomorrow.Format("yyyy/MM/dd") + " 09:00:00").getTime();
+    var startTick = new Date().getTime();
     for (;;) {
-        var clickRet = click(getDropsBtn.bounds().centerX(), getDropsBtn.bounds().centerY());
-        log("点击 领水滴(" + getDropsBtn.bounds().centerX() + ", " + getDropsBtn.bounds().centerY() + "): " + clickRet + ", 并等待 领水滴 出现, 5s超时");
-        sleep(2000);
-        var taskListTips = common.waitForTextMatches(/领水滴/, true, 5);
-        if (taskListTips == null) {
-            break;
-        }
-
-        var taskListCloseBtn = taskListTips.parent().parent().child(taskListTips.parent().parent().childCount() - 1);
-        var oneWalkTaskList = [];   //去逛逛任务列表，待够时间回来
-        var wateringTaskList = [];  //每日浇水10次任务列表
-        var totalTasks = [];
-        var validTaskNames = [];
-        for (var j = 0; j < 10 && validTaskNames.length == 0; j++) {
-            totalTasks = packageName(common.destPackageName).textMatches(/.*奖励\d+g水滴.*/).find();
-            var validTasks = packageName(common.destPackageName).textMatches(/.*奖励\d+g水滴.*/).visibleToUser(true).find();
-            for (var i = 0; i < validTasks.length; i++) {
-                var taskItem = validTasks[i].parent();
-                var btnParent = taskItem.child(taskItem.childCount() - 1);
-                var btn = btnParent.child(btnParent.childCount() - 1);
-                if (btn.bounds().height() > 50) {
-                    validTaskNames.push(taskItem.child(1).text());
-                }
-            }
-            toastLog("任务数: " + totalTasks.length + ", 可见: " + validTaskNames.length + ", " + validTaskNames);
-            if (validTaskNames.length == 0) {
-                sleep(1000);
-            }
-        }
-
-        if (validTaskNames.length == 0) {
-            commonAction.backToAppMainPage();
-            return;
-        }
-
-        if (totalTasks.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
-            commonAction.backToAppMainPage();
-            return;
-        }
-
-        var dones = textMatches(/去领取|领取/).visibleToUser(true).find();
-        log("可领取: " + dones.length);
-        if (dones.length != 0) {
-            log("领取水滴: " + click(dones[0].bounds().centerX(), dones[0].bounds().centerY()));
-            sleep(1000);
-
-            // 领取后任务列表有变不能点击旧的坐标
-            // 任务列表关闭按钮坐标
-            log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-            sleep(1000);
-            continue;
-        }
-
-        totalTasks.forEach(function(tv) {
-            var taskItem = tv.parent();
-            var title = taskItem.child(1).text();   //是其父节点的第二个子节点
-            var tips = "";
-            for (var i = 2; i < taskItem.childCount() - 1; i++) {
-                if (taskItem.child(i).className() == "android.widget.TextView") {
-                    tips = tips + taskItem.child(i).text();
-                }
-            }
-            var btnParent = taskItem.child(taskItem.childCount() - 1);  //是其父节点的最后一个子节点
-            var btn = btnParent.child(btnParent.childCount() - 1);
-            if (btn.text() != "已完成" &&
-                btn.text() != "再逛逛" &&
-                btn.text() != "已收集" &&
-                btn.text() != "已领取" &&
-                btn.text() != "明日再来" &&
-                title != "帮2位好友浇水" &&
-                title.indexOf("专属特惠") == -1) {
-                var obj = {};
-                obj.Title = title;
-                obj.Tips = tips;
-                obj.BtnName = btn.text();
-                obj.Button = btn;
-                if (obj.Title != "每日累计浇水10次") {
-                    oneWalkTaskList.push(obj);
-                } else {
-                    wateringTaskList.push(obj);
-                }
-                log("未完成任务" + (oneWalkTaskList.length + wateringTaskList.length) + ": " + obj.Title + ", " + obj.Tips + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + obj.Button.bounds().height());
+        var beans = textMatches(/x\d+/).find();
+        beans.forEach(function(tv) {
+            var bubble = tv.parent().parent();
+            var title = bubble.child(bubble.childCount() - 1).text();
+            if (tv.text() != "x0") {
+                log(title + tv.text() + ": " + click(tv.parent().bounds().centerX(), tv.parent().bounds().centerY()));
+                sleep(300);
             } else {
-                log("跳过任务: " + title + ", " + tips + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + btn.bounds().height());
+                bubble = tv.parent().parent().parent();
+                title = bubble.child(bubble.childCount() - 1).child(0).text();
+                if (/剩\d+:\d+:\d+/.test(title)) {
+                    var HHmmss = title.match(/\d+/g);
+                    newNextGetBeanCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                }
             }
         });
 
-        var uncompleteTaskNum = oneWalkTaskList.length + wateringTaskList.length;
-        log("未完成任务数: " + uncompleteTaskNum);
-        if (uncompleteTaskNum == 0) {
-            common.safeSet(nowDate + ":" + getDropsTag, "done");
-            toastLog("完成 " + getDropsTag);
+
+        if (beans.length == 1 && beans[0].text() == "x0") {
             break;
         }
 
-        oneWalkTaskList = common.filterTaskList(oneWalkTaskList, validTaskNames);
-        if (doOneWalkTasks(oneWalkTaskList)) {
-            log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-            sleep(1000);
-            continue;
+        if (new Date().getTime() - startTick > 30 * 1000) {
+            break;
+        }
+    }
+
+    common.safeSet(common.nextGetBeanTimestampTag, newNextGetBeanCheckTimestamp);
+    log(common.nextGetBeanTimestampTag + " 设置为: " + common.timestampToTime(newNextGetBeanCheckTimestamp));
+
+    //上划一点点露出下面的收取营养液
+    startTick = new Date().getTime();
+    for (;;) {
+        var tips = textMatches(/喊TA回来|可能认识的人/).visibleToUser(true).findOne(1000);
+        if (tips == null) {
+            log("上划屏幕 " + swipe(device.width / 2, device.height * 15 / 16, device.width / 2, device.height * 13 / 16, 300));
+        } else {
+            break;
         }
 
-        wateringTaskList = common.filterTaskList(wateringTaskList, validTaskNames)
-        if (doWateringTasks(wateringTaskList, duckBtn)) {
-            //浇水任务不需要关闭任务列表，它自己会关闭
-            continue;
+        if (new Date().getTime() - startTick > 5 * 1000) {
+            break;
         }
-
-        // 任务列表关闭按钮坐标
-        log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-        sleep(1000);
     }
 
-    commonAction.backToAppMainPage();
-}
-
-bean.doPeriodGetDrops = function () {
-    log("bean.doPeriodGetDrops");
-    //不在时间范围内不判断定时领水任务做没做
-    var inTheMorning = common.checkAuditTime("00:00", "09:00");
-    var atNoon = common.checkAuditTime("11:00", "14:00");
-    var atNight = common.checkAuditTime("17:00", "21:00");
-    if (!inTheMorning && !atNoon && !atNight) {
-        log("不在定时领水时间段内");
-        return;
-    }
-
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var doneMorning = common.safeGet(nowDate + ":" + morningGetDropsTag);
-    var doneNoon = common.safeGet(nowDate + ":" + morningGetDropsTag);
-    var doneNight = common.safeGet(nowDate + ":" + morningGetDropsTag);
-    
-    // 定时领水时间段[00:00~09:00]、[11:00~14:00]、[17:00~21:00]
-    var now = new Date().getTime();
-    var curDate = new Date().Format("yyyy/MM/dd");
-    var morningBeginTime = new Date(curDate + " 00:00:00").getTime();
-    var morningEndTime = new Date(curDate + " 09:00:00").getTime();
-    var noonBeginTime = new Date(curDate + " 11:00:00").getTime();
-    var noonEndTime = new Date(curDate + " 14:00:00").getTime();
-    var nightBeginTime = new Date(curDate + " 17:00:00").getTime();
-    var nightEndTime = new Date(curDate + " 21:00:00").getTime();
-    log("定时领水有效时间段: [" + common.timestampToTime(morningBeginTime) + ", " + common.timestampToTime(morningEndTime) + "]: " + doneMorning);
-    log("定时领水有效时间段: [" + common.timestampToTime(noonBeginTime) + ", " + common.timestampToTime(noonEndTime) + "]: " + doneNoon);
-    log("定时领水有效时间段: [" + common.timestampToTime(nightBeginTime) + ", " + common.timestampToTime(nightEndTime) + "]: " + doneNight);
-
-    if (now > morningEndTime && doneMorning == null) {
-        common.safeSet(nowDate + ":" + morningGetDropsTag, "expired");
-        toastLog("过期 " + morningGetDropsTag);
-    }
-
-    if (now > noonEndTime && doneNoon == null) {
-        common.safeSet(nowDate + ":" + noonGetDropsTag, "expired");
-        toastLog("过期 " + noonGetDropsTag);
-    }
-
-    if (now > nightEndTime && doneNight == null) {
-        common.safeSet(nowDate + ":" + nightGetDropsTag, "expired");
-        toastLog("过期 " + nightGetDropsTag);
-    }
-
-    if (inTheMorning && doneMorning != null || atNoon && doneNoon != null || atNight && doneNight != null) {
-        return;
-    }
-
-    toast("bean.doPeriodGetDrops");
-    var actionBar = gotoBean();
-    if (actionBar == null) {
+    var nutrientTips = text("收取营养液").findOne(1000)
+    if (nutrientTips == null) {
         commonAction.backToAppMainPage();
         return;
     }
 
-    var getDropsBtn = actionBar.child(actionBar.childCount() - 2).child(1);
-    for (;;) {
-        var clickRet = click(getDropsBtn.bounds().centerX(), getDropsBtn.bounds().centerY());
-        log("点击 领水滴(" + getDropsBtn.bounds().centerX() + ", " + getDropsBtn.bounds().centerY() + "): " + clickRet + ", 并等待 领水滴 出现, 5s超时");
-        sleep(2000);
-        var taskListTips = common.waitForTextMatches(/领水滴/, true, 5);
-        if (taskListTips == null) {
-            break;
+    var frame = nutrientTips.parent();
+    var hScrollView = frame.child(2).child(0);
+    for (var i = 0; i < 3; i++) {
+        var tips = textMatches(/喊TA回来|可能认识的人/).visibleToUser(true).find();
+        for (var j = 0; j < tips.length; j++) {
+            var friendItem = tips[j].parent();
+            var nickname = friendItem.child(friendItem.childCount() - 2).text();
+            //不能收取的childCount()==3
+            if (friendItem.childCount() == 5) {
+                var nutrientNum = parseInt(friendItem.child(2).child(0).text());
+                if (nutrientNum > 1) {
+                    clickRet = click(friendItem.bounds().centerX(), friendItem.bounds().centerY());
+                    log("点击 " + nickname + ": " + clickRet + ", 并等待 你收取Ta 出现, 15s超时");
+                    var getTaNutrientTips = common.waitForText("text", "你收取Ta", true, 15);
+                    if (getTaNutrientTips == null) {
+                        commonAction.backToAppMainPage();
+                        return;
+                    }
+
+                    var nutrient = textMatches(/x\d+/).visibleToUser(true).findOne(5000);
+                    if (nutrient == null) {
+                        commonAction.backToAppMainPage();
+                        return;
+                    }
+
+                    clickRet = click(nutrient.parent().bounds().centerX(), nutrient.parent().bounds().centerY());
+
+                    log("收取 " + nickname + " " + nutrient.text() + ": " + clickRet);
+                    sleep(1000);
+                    back();
+                    sleep(3000);
+                }
+            } else {
+                log("pass " + nickname);
+            }
         }
 
-        var dones = textMatches(/去领取|领取/).visibleToUser(true).find();
-        log("可领取: " + dones.length);
-        if (dones.length != 0) {
-            log("领取水滴: " + click(dones[0].bounds().centerX(), dones[0].bounds().centerY()));
-            sleep(1000);
-
-            // 领取后任务列表有变不能点击旧的坐标
-            // 任务列表关闭按钮坐标
-            log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-            sleep(1000);
-            continue;
-        } else {
-            break;
-        }
+        log("从右往左滑动屏幕: " + swipe(device.width * 3 / 4, hScrollView.bounds().centerY(), device.width / 4, hScrollView.bounds().centerY(), 300));
     }
 
     commonAction.backToAppMainPage();
