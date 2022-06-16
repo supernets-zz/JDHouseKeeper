@@ -4,9 +4,9 @@ common.appName = "JDHouseKeeper";
 common.destAppName = "京东";
 common.destPackageName = "com.jingdong.app.mall";
 
-//Min(下一次收取京豆检查时间戳, 下一次领取狗粮检查时间戳, 下一个整点检查时间戳)
-common.nextGetBeanTimestampTag = "下一次收取京豆检查时间戳";  //带毫秒
-common.nextGetDogFoodTimestampTag = "下一次领取狗粮检查时间戳";  //带毫秒
+//Min(下一次收取营养液检查时间戳, 下一次领取狗粮检查时间戳, 下一个整点检查时间戳)
+common.nextGetNutrientTimestampTag = "下一次收取营养液检查时间戳";  //带毫秒
+common.nextFeedDogFoodTimestampTag = "下一次领喂养狗粮检查时间戳";  //带毫秒
 
 var storagelock = threads.lock();
 var localStorages = storages.create(common.appName+":global");

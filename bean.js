@@ -3,11 +3,9 @@ var bean = {};
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
-//const plantBeanTag = "种豆得豆每日任务";
 const upgradeEarnBeanTag = "升级赚京豆每日任务";
 
 bean.dailyJobs = [];
-//bean.dailyJobs.push(plantBeanTag);
 bean.dailyJobs.push(upgradeEarnBeanTag);
 
 gotoBean = function () {
@@ -207,6 +205,14 @@ bean.doUpgradeBeans = function () {
 }
 
 doGetNutrientTasks = function (growthTips) {
+    var moreTaskFrame = growthTips.parent().parent().parent().parent();
+    var moreTasksBtn = moreTaskFrame.child(moreTaskFrame.childCount() - 2);
+
+    var clickRet = click(moreTasksBtn.bounds().centerX(), moreTasksBtn.bounds().centerY());
+    log("点击 更多任务: " + clickRet + ", 并等待 /已获得\d+\/\d+瓶 出现, 15s超时");
+
+    common.waitForTextMatches(/已获得\d+\/\d+瓶/, true, 15);
+
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     // 除了去邀请以及两个去签到任务以外其他都做完了就算完成
     for (;;) {    
@@ -302,7 +308,7 @@ doGetNutrientTasks = function (growthTips) {
 getMyNutrients = function () {
     var tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    var newNextGetBeanCheckTimestamp = new Date(tomorrow.Format("yyyy/MM/dd") + " 07:00:00").getTime();
+    var newNextGetNutrientCheckTimestamp = new Date(tomorrow.Format("yyyy/MM/dd") + " 07:00:00").getTime();
     var startTick = new Date().getTime();
     for (;;) {
         var nutrients = textMatches(/x\d+/).find();
@@ -319,7 +325,7 @@ getMyNutrients = function () {
                 title = bubble.child(bubble.childCount() - 1).child(0).text();
                 if (/剩\d+:\d+:\d+/.test(title)) {
                     var HHmmss = title.match(/\d+/g);
-                    newNextGetBeanCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                    newNextGetNutrientCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
                 }
             }
         });
@@ -333,8 +339,8 @@ getMyNutrients = function () {
         }
     }
 
-    common.safeSet(common.nextGetBeanTimestampTag, newNextGetBeanCheckTimestamp);
-    log(common.nextGetBeanTimestampTag + " 设置为: " + common.timestampToTime(newNextGetBeanCheckTimestamp));
+    common.safeSet(common.nextGetNutrientTimestampTag, newNextGetNutrientCheckTimestamp);
+    log(common.nextGetNutrientTimestampTag + " 设置为: " + common.timestampToTime(newNextGetNutrientCheckTimestamp));
 }
 
 getFriendsNutrients = function () {
@@ -415,14 +421,6 @@ bean.doRoutine = function () {
         commonAction.backToAppMainPage();
         return;
     }
-
-    var moreTaskFrame = growthTips.parent().parent().parent().parent();
-    var moreTasksBtn = moreTaskFrame.child(moreTaskFrame.childCount() - 2);
-
-    clickRet = click(moreTasksBtn.bounds().centerX(), moreTasksBtn.bounds().centerY());
-    log("点击 更多任务: " + clickRet + ", 并等待 /已获得\d+\/\d+瓶 出现, 15s超时");
-
-    common.waitForTextMatches(/已获得\d+\/\d+瓶/, true, 15);
 
     doGetNutrientTasks(growthTips);
 

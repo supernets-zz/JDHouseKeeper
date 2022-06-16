@@ -142,19 +142,19 @@ threads.start(function(){
         log("isAllDailyTaskComplete: " + allComplete + ", mainWorker return: " + ret);
         if (allComplete && ret) {
             var now = new Date().getTime();
-            var nextGetBeanCheckTS = parseInt(common.safeGet(common.nextGetBeanTimestampTag));
-            var nextGetDogFoodCheckTS = parseInt(common.safeGet(common.nextGetDogFoodTimestampTag));
+            var nextGetNutrientCheckTS = parseInt(common.safeGet(common.nextGetNutrientTimestampTag));
+            var nextFeedDogFoodCheckTS = parseInt(common.safeGet(common.nextFeedDogFoodTimestampTag));
             var nextPeriodCheckTS = parseInt((now + execInterval * 1000) / (execInterval * 1000)) * (execInterval * 1000);
-            log(common.nextGetBeanTimestampTag + ": " + common.timestampToTime(nextGetBeanCheckTS) + ", " +
-                common.nextGetDogFoodTimestampTag + ": " + common.timestampToTime(nextGetDogFoodCheckTS) + ", " +
+            log(common.nextGetNutrientTimestampTag + ": " + common.timestampToTime(nextGetNutrientCheckTS) + ", " +
+                common.nextFeedDogFoodTimestampTag + ": " + common.timestampToTime(nextFeedDogFoodCheckTS) + ", " +
                 "下周期检查时间戳: " + common.timestampToTime(nextPeriodCheckTS));
 
             var finalNextCheckTS = nextPeriodCheckTS;
-            if (!isNaN(nextGetBeanCheckTS) && now < nextGetBeanCheckTS) {
-                finalNextCheckTS = Math.min(finalNextCheckTS, nextGetBeanCheckTS);
+            if (!isNaN(nextGetNutrientCheckTS) && now < nextGetNutrientCheckTS) {
+                finalNextCheckTS = Math.min(finalNextCheckTS, nextGetNutrientCheckTS);
             }
-            if (!isNaN(nextGetDogFoodCheckTS) && now < nextGetDogFoodCheckTS) {
-                finalNextCheckTS = Math.min(finalNextCheckTS, nextGetDogFoodCheckTS);
+            if (!isNaN(nextFeedDogFoodCheckTS) && now < nextFeedDogFoodCheckTS) {
+                finalNextCheckTS = Math.min(finalNextCheckTS, nextFeedDogFoodCheckTS);
             }
 
             toastLog(Math.floor((finalNextCheckTS - now) / 1000) + "s 后的 " + common.timestampToTime(finalNextCheckTS) + " 进行下一次检查");
@@ -162,226 +162,6 @@ threads.start(function(){
         }
     }
 });
-
-//宠汪汪每日任务
-function doPetDailyTasks() {
-    log("doPetDailyTasks");
-    // 我的-> 宠汪汪
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var done = safeGet(nowDate + ":宠汪汪每日任务");
-    if (done != null) {
-        log("宠汪汪每日任务 已做: " + done);
-        return;
-    }
-
-    toast("doPetDailyTasks");
-    app.startActivity({
-        action: "VIEW",
-        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://h5.m.jd.com/babelDiy/Zeus/2wuqXrZrhygTQzYA7VufBEpj4amH/index.html","M_sourceFrom":"mxz","msf_type":"auto"}'
-    })
-
-    var clickRet = false;
-    var petBtn = WaitForText("text", "积分超值兑换", true, 10);
-    if (petBtn == null) {
-        backToAppMainPage();
-        return;
-    }
-
-    // 帮忙喂养：click(device.width / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 汪汪大比拼：click(device.width / 5, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 领狗粮：click(device.width / 2, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 喂养：click(device.width * 5 / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 帮忙喂养-> 回家：click(100, device.height - 250)
-    // 帮忙喂养-> 帮ta喂养：click(device.width - 100, device.height - 250)
-    clickRet = click(device.width / 2, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
-    log("点击 领狗粮: " + clickRet + ", 并等待10s超时");
-
-    // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
-    // 除了去邀请以及两个去签到任务以外其他都做完了就算完成
-    for (;;) {    
-        petBtn = WaitForText("textContains", "做任务得狗粮", true, 10);
-        if (petBtn == null) {
-            backToAppMainPage();
-            return;
-        }
-
-        sleep(3000);
-        var oneWalkTaskList = [];  //逛逛会场、关注商品任务列表，待够时间回来
-        var subscribeShopTaskList = []; //关注店铺任务列表
-        var subscribeChannelTaskList = []; //关注频道任务列表
-        var totalTasks = textMatches(/.*[奖励|得]\d+g狗粮|.*可领\d+g狗粮.*|.*奖励狗粮\d+g/).find();
-        var validTasks = textMatches(/.*[奖励|得]\d+g狗粮|.*可领\d+g狗粮.*|.*奖励狗粮\d+g/).visibleToUser(true).find();
-
-        var validTaskNames = [];
-        for (var i = 0; i < validTasks.length; i++) {
-            var objs = [];
-            queryList(validTasks[i].parent(), objs);
-            validTaskNames.push(objs[1].text());
-        }
-        toastLog("任务数: " + totalTasks.length + ", 可见: " + validTasks.length + ", " + validTaskNames);
-
-        for (var i = 0; i < totalTasks.length; i++) {
-            var objs = [];
-            queryList(totalTasks[i].parent(), objs);
-            if (objs[3].text() != "去邀请" && 
-                objs[3].text() != "去参与" && 
-                objs[3].text() != "明天再来" &&
-                objs[3].text() != "领取" &&
-                objs[3].text() != "已完成" &&
-                objs[3].text() != "去喂食") {
-                var obj = {};
-                obj.Title = objs[1].text();
-                obj.Tips = objs[2].text();
-                obj.BtnName = objs[3].text();
-                obj.Button = objs[3];
-                if (obj.Title.indexOf("关注店铺") != -1) {
-                    subscribeShopTaskList.push(obj);
-                } else if (obj.Title.indexOf("关注频道") != -1) {
-                    subscribeChannelTaskList.push(obj);
-                // } else if (obj.Title.indexOf("帮好友") != -1) {
-                //     feedTaskList.push(obj);
-                } else if (obj.Title.indexOf("逛逛会场") != -1 || obj.Title.indexOf("关注商品") != -1 || obj.Title.indexOf("幸运任务") != -1) {
-                    oneWalkTaskList.push(obj);
-                }
-                log("未完成任务" + (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + ")");
-            } else {
-                log("跳过任务: " + objs[1].text() + ", " + objs[3].text());
-            }
-        }
-
-        if (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length == 0) {
-            safeSet(nowDate + ":宠汪汪每日任务", "done");
-            toastLog("完成 宠汪汪每日任务");
-            break;
-        }
-
-        oneWalkTaskList = filterTaskList(oneWalkTaskList, validTaskNames)
-        if (doOneWalkTasks(oneWalkTaskList)) {
-            sleep(5000);
-            continue;
-        }
-
-        subscribeShopTaskList = filterTaskList(subscribeShopTaskList, validTaskNames)
-        if (doWalkShopTasks(subscribeShopTaskList)) {
-            sleep(5000);
-            continue;
-        }
-
-        subscribeChannelTaskList = filterTaskList(subscribeChannelTaskList, validTaskNames)
-        if (doSubscibeChannelTasks(subscribeChannelTaskList)) {
-            sleep(5000);
-            continue;
-        }
-
-        log("往上划动半个屏幕: " + swipe(device.width / 2, device.height * 3 / 4, device.width / 2, device.height / 4, 300));
-        sleep(1000);
-
-        // doPickupMerchantTasks(pickupMerchantTaskList);
-        // 任务列表关闭按钮坐标
-        // var bound = textContains("当前通过任务获得").findOne(1000).bounds();
-        // log("关闭任务列表: " + click(device.width - 60, bound.centerY() - 88));
-        //break;
-    }
-
-    backToAppMainPage();
-}
-
-function doPetRoutineTasks() {
-    toastLog("doPetRoutineTasks");
-    // 我的-> 宠汪汪
-    app.startActivity({
-        action: "VIEW",
-        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://h5.m.jd.com/babelDiy/Zeus/2wuqXrZrhygTQzYA7VufBEpj4amH/index.html","M_sourceFrom":"mxz","msf_type":"auto"}'
-    })
-
-    var clickRet = false;
-    var petBtn = WaitForText("text", "积分超值兑换", true, 10);
-    if (petBtn == null) {
-        backToAppMainPage();
-        return;
-    }
-
-    sleep(5000);
-    //狗粮吃完了自动喂狗粮
-    var dogFood = textMatches(/\d+小时\d+分\d+秒/).find()
-    if (dogFood.length == 0) {
-        clickRet = click(device.width * 5 / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
-        log("点击 喂养: " + clickRet);
-        textContains("消耗").waitFor();
-        //每次20g
-        var grams = textContains("消耗").find();
-        var feed = grams[1];
-        clickRet = click(feed.bounds().right, feed.bounds().top - feed.bounds().height() * 2);
-        log("点击 消耗20g: " + clickRet);
-        feed = text("喂养").findOne(1000);
-        if (feed == null) {
-            backToAppMainPage();
-            return;
-        }
-
-        clickRet = click(feed.bounds().centerX(), feed.bounds().centerY());
-        log("点击 确定喂养: " + clickRet);
-        sleep(1000);
-
-        backToAppMainPage();
-        return;
-    } else {
-        log("狗粮剩余时间: " + dogFood[0].text());
-    }
-    // 帮忙喂养：click(device.width / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 汪汪大比拼：click(device.width / 5, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 领狗粮：click(device.width / 2, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 喂养：click(device.width * 5 / 6, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5))
-    // 帮忙喂养-> 回家：click(100, device.height - 250)
-    // 帮忙喂养-> 帮ta喂养：click(device.width - 100, device.height - 250)
-
-    //领取任务达标获得的狗粮，例如三餐、帮朋友喂狗粮
-    clickRet = click(device.width / 2, petBtn.bounds().centerY() - parseInt(petBtn.bounds().height() * 1.5));
-    log("点击 领狗粮: " + clickRet + ", 并等待10s超时");
-    sleep(2000);
-
-    petBtn = WaitForTextMatches(/做任务得狗粮.*/, true, 10);
-    if (petBtn == null) {
-        backToAppMainPage();
-        return;
-    }
-
-    sleep(3000);
-
-    for (;;) {
-        var totalGetBtns = text("领取").find();
-        var validGetBtns = text("领取").visibleToUser(true).find();
-
-        log("领取: " + totalGetBtns.length + ", 可视: " + validGetBtns.length);
-        if (totalGetBtns.length == validGetBtns.length && totalGetBtns.length == 0) {
-            break;
-        }
-
-        if (validGetBtns.length > 0) {
-            var getBtn = validGetBtns[0];
-            toastLog("点击 领取: " + click(getBtn.bounds().centerX(), getBtn.bounds().centerY()));
-            sleep(1000);
-            break;
-        } else {
-            log("往上划动半个屏幕: " + swipe(device.width / 2, device.height * 3 / 4, device.width / 2, device.height / 4, 300));
-            sleep(1000);
-        }
-    }
-
-    backToAppMainPage();
-}
-
-function doubleClick(ctext,index){
-    var trytimes=0
-    var result = false;
-    while(trytimes<2){
-        result = click(ctext,index);
-        log("click "+ctext+",result="+result);
-        trytimes=trytimes+1;
-        sleep(1000);
-    }
-    return result;
-}
 
 function isAllDailyTaskComplete() {
     var nowDate = new Date().Format("yyyy-MM-dd");
@@ -393,7 +173,6 @@ function isAllDailyTaskComplete() {
     taskList.push.apply(taskList, appliance.dailyJobs);
     taskList.push.apply(taskList, farm.dailyJobs);
     taskList.push.apply(taskList, bean.dailyJobs);
-    taskList.push.apply(taskList, pet.dailyJobs);
     for (var i = 0; i < taskList.length; i++) {
         var done = common.safeGet(nowDate + ":" + taskList[i]);
         if (done == null) {
@@ -453,21 +232,8 @@ function mainWorker() {
             bean.doRoutine();
 
             // 我的-> 宠汪汪-> 领狗粮，每日一次
-            pet.doPet();
-            // // 领京豆-> 种豆得豆-> 更多任务，每日一次
-            // doBeanDailyTasks();
-            // // 领京豆-> 升级赚京豆，每日一次
-            // doUpgradeEarnBeanDailyTasks();
-            // // 免费水果-> 连续签到，每日一次
-            // doFarmDailySignTask();
-            // // 免费水果-> 领水滴，每日一次
-            // doFarmDailyTasks();
-            // // 我的-> 宠汪汪
-            // doPetDailyTasks();
+            pet.doRoutine();
 
-            // doBeanRoutineTasks();
-            // doFarmRoutineTasks();
-            // doPetRoutineTasks();
             ret = true;
         }
 	} catch(e) {
