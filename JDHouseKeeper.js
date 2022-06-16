@@ -5,10 +5,12 @@ var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
 var plusMember = require("./plusMember.js");
+var book = require("./book.js");
 var coupon99 = require("./coupon99.js");
 var appliance = require("./appliance.js");
 var farm = require("./farm.js");
 var bean = require("./bean.js");
+var pet = require("./pet.js");
 
 var shutdownFlag = threads.atomic();
 var background = threads.disposable();
@@ -160,187 +162,6 @@ threads.start(function(){
         }
     }
 });
-
-function doBeanRoutineTasks() {
-    toastLog("doBeanRoutineTasks");
-    // 领京豆-> 种豆得豆
-    var getJDBean = text("领京豆").packageName(jdPackageName).findOne(30000);
-    if (getJDBean == null){
-        toastLog("领京豆 not exist");
-        backToAppMainPage();
-        return;
-    }
-
-    var clickRet = click(getJDBean.bounds().centerX(), getJDBean.bounds().centerY() - getJDBean.bounds().height());
-    log("点击 领京豆: " + clickRet + ", 并等待5s超时");
-    if (!clickRet) {
-        backToAppMainPage();
-        return;
-    }
-
-    getJDBean = WaitForText("text", "规则", true, 5);
-    if (getJDBean == null) {
-        backToAppMainPage();
-        return;
-    }
-
-    // 定位 升级赚京豆 红色按钮
-    // packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).waitFor();
-    // var upgradeEarnBean = packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).find();
-    // log("点击 种豆得豆: " + click(upgradeEarnBean[0].bounds().centerX() + device.width / 2 - 30, upgradeEarnBean[0].bounds().centerY()));
-    log("点击 种豆得豆: " + click(getJDBean.bounds().left, getJDBean.bounds().centerY() + getJDBean.bounds().height() * 16));
-    var moreTasks = WaitForText("textContains", "更多任务", false, 5);
-    if (moreTasks == null) {
-        backToAppMainPage();
-        return;
-    }
-
-    //上划一点点露出下面的收取营养液
-    // swipe(device.width / 2, device.height * 7 / 8, device.width / 2, device.height * 5 / 8, 300);
-    // 领完营养液后会刷新，需要重新获取一下可领营养液
-    // 除了去邀请以及两个去签到任务以外其他都做完了就算完成
-    for (;;) {
-        var beans = textMatches(/x\d+/).find();
-        beans.forEach(function(tv) {
-            if (tv.text() != "x0") {
-                log(tv.text() + ": " + click(tv.bounds().left, tv.bounds().centerY()));
-                sleep(300);
-            }
-        });
-        if (beans.length == 1 && beans[0].text() == "x0") {
-            break;
-        }
-    }
-
-    backToAppMainPage();
-}
-
-//升级赚京豆每日任务
-function doUpgradeEarnBeanDailyTasks() {
-    log("doUpgradeEarnBeanDailyTasks");
-    // 领京豆-> 升级赚京豆
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var done = safeGet(nowDate + ":升级赚京豆每日任务");
-    if (done != null) {
-        log("升级赚京豆每日任务 已做: " + done);
-        return;
-    }
-
-    toast("doUpgradeEarnBeanDailyTasks");
-    var getJDBean = text("领京豆").packageName(jdPackageName).findOne(30000);
-    if (getJDBean == null){
-        toastLog("领京豆 not exist");
-        backToAppMainPage();
-        return;
-    }
-
-    var clickRet = click(getJDBean.bounds().centerX(), getJDBean.bounds().centerY() - getJDBean.bounds().height());
-    log("点击 领京豆: " + clickRet + ", 并等待5s超时");
-    if (!clickRet) {
-        backToAppMainPage();
-        return;
-    }
-
-    getJDBean = WaitForText("text", "规则", true, 5);
-    if (getJDBean == null) {
-        backToAppMainPage();
-        return;
-    }
-
-    // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
-    // 除了双签领豆任务以外其他都做完了就算完成
-    for (;;) {
-        // 定位 升级赚京豆 红色按钮
-        packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).waitFor();
-        var upgradeEarnBean = packageName(jdPackageName).className("android.view.ViewGroup").depth(16).drawingOrder(12).indexInParent(12).find();
-        log("点击 升级赚京豆: " + click(upgradeEarnBean[0].bounds().centerX(), upgradeEarnBean[0].bounds().centerY()));
-        sleep(2000);
-        var upgradeTasks = WaitForTextMatches(/做任务再升一级.*/, true, 5);
-        if (upgradeTasks == null) {
-            backToAppMainPage();
-            return;
-        }
-
-        var oneWalkTaskList = [];  //去逛逛任务列表，待够时间回来
-        var tips = textMatches(/.*\(\d\/\d\).*/).find();
-        log("总任务数: " + tips.length);
-        if (tips.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
-            break;
-        }
-        tips.forEach(function(tv) {
-            var objs = [];
-            queryList(tv.parent().parent(), objs);
-            if (/*objs[1].text().indexOf("双签领豆") == -1 && */objs[5].text() != "已完成" && /升级.*会员.*/.test(objs[1].text()) == false) {
-                var obj = {};
-                obj.Title = objs[1].text();
-                obj.Tips = objs[2].text();
-                obj.BtnName = objs[5].text();
-                obj.Button = objs[5];
-                oneWalkTaskList.push(obj);
-                log("未完成任务" + oneWalkTaskList.length + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + ")");
-            } else {
-                log("跳过任务: " + objs[1].text() + ", " + objs[2].text() + ", " + objs[5].text());
-            }
-        });
-
-        if (oneWalkTaskList.length == 0) {
-            safeSet(nowDate + ":升级赚京豆每日任务", "done");
-            toastLog("完成 升级赚京豆每日任务");
-            break;
-        }
-
-        if (doOneWalkTasks(oneWalkTaskList)) {
-            sleep(2000);
-            continue;
-        }
-
-        // 任务列表关闭按钮坐标
-        log("关闭升级赚京豆任务列表: " + click(device.width - 60, upgradeTasks[0].bounds().top - upgradeTasks[0].bounds().height() * 7));
-    }
-
-    backToAppMainPage();
-}
-
-//宠汪汪关注频道任务
-function doSubscibeChannelTasks(tasklist) {
-    var ret = false;
-    for (var i = 0; i < tasklist.length; i++) {
-        toastLog("点击 " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
-        var taskList = WaitForText("text", "进入并关注", true, 10);
-        if (taskList == null) {
-            break;
-        }
-
-        for (;;) {
-            var totalSubscribeBtns = text("进入并关注").find();
-            var validSubscribeBtns = text("进入并关注").visibleToUser(true).find();
-
-            log("进入并关注: " + totalSubscribeBtns.length + ", 可视: " + validSubscribeBtns.length);
-            if (totalSubscribeBtns.length == validSubscribeBtns.length && totalSubscribeBtns.length == 0) {
-                back();
-                ret = true;
-                return;
-            }
-
-            if (validSubscribeBtns.length > 0) {
-                var subscribeBtn = validSubscribeBtns[0];
-                toastLog("点击 进入并关注: " + click(subscribeBtn.bounds().centerX(), subscribeBtn.bounds().centerY()));
-                // 等待离开"关注频道"任务列表页面
-                WaitDismiss("text", "进入并关注", 10);
-                sleep(10000);
-                //从关注的页面返回
-                back();
-                sleep(3000);
-                WaitForText("text", "关注频道任务", true, 10);
-            } else {
-                log("往上划动半个屏幕: " + swipe(device.width / 2, device.height * 3 / 4, device.width / 2, device.height / 4, 300));
-                sleep(1000);
-            }
-        }
-    }
-    return ret;
-}
 
 //宠汪汪每日任务
 function doPetDailyTasks() {
@@ -567,10 +388,12 @@ function isAllDailyTaskComplete() {
 //    var taskList = [":京东会员每日领京豆", ":种豆得豆每日任务", ":升级赚京豆每日任务", ":宠汪汪每日任务", ":东东农场连续签到", ":东东农场每日任务"];
     var taskList = [];
     taskList.push.apply(taskList, plusMember.dailyJobs);
+    taskList.push.apply(taskList, book.dailyJobs);
     taskList.push.apply(taskList, coupon99.dailyJobs);
     taskList.push.apply(taskList, appliance.dailyJobs);
     taskList.push.apply(taskList, farm.dailyJobs);
     taskList.push.apply(taskList, bean.dailyJobs);
+    taskList.push.apply(taskList, pet.dailyJobs);
     for (var i = 0; i < taskList.length; i++) {
         var done = common.safeGet(nowDate + ":" + taskList[i]);
         if (done == null) {
@@ -602,11 +425,17 @@ function mainWorker() {
             // 我的-> 会员店-> 天天领京豆-> 立即翻牌，每日一次
             plusMember.doSignIn();
 
+            // 京东图书每日签到
+            book.doSignIn();
+
             // 券后9.9-> 领券-> 立即签到，每日一次
             coupon99.doSignIn();
 
             // 京东电器-> 左上角签到-> 立即翻牌，每日一次
             appliance.doSignIn();
+
+            // 免费水果-> 领水滴，定时领水
+            farm.doPeriodGetDrops();
 
             // 免费水果-> 连续签到，每日一次
             farm.doSignIn();
@@ -617,17 +446,14 @@ function mainWorker() {
             // 免费水果-> 领水滴，每日一次
             farm.doGetDrops();
 
-            // 免费水果-> 领水滴，定时领水
-            farm.doPeriodGetDrops();
-
-            // 领京豆-> 种豆得豆-> 更多任务
-            bean.doGetBeans();
-
             // 领京豆-> 升级赚京豆
             bean.doUpgradeBeans();
 
             // 领京豆-> 种豆得豆，周期去做
             bean.doRoutine();
+
+            // 我的-> 宠汪汪-> 领狗粮，每日一次
+            pet.doPet();
             // // 领京豆-> 种豆得豆-> 更多任务，每日一次
             // doBeanDailyTasks();
             // // 领京豆-> 升级赚京豆，每日一次

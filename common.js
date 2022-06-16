@@ -183,12 +183,14 @@ common.waitDismiss = function (method, txt, sec) {
     var obj = null;
     for (var i = 0; i < sec; i++) {
         obj = eval(method + "(\"" + txt + "\").findOne(1000)");
-        if (obj == null) {
+        if (obj != null) {
             log("等待 " + txt + " 消失");
             return false;
+        } else {
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 common.filterTaskList = function (todoTasks, validTaskNames) {

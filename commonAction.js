@@ -86,24 +86,67 @@ commonAction.backToAppMainPage = function () {
 commonAction.doOneWalkTasks = function (tasklist) {
     var ret = false;
     for (var i = 0; i < tasklist.length; i++) {
-        toastLog("点击 " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
+        toastLog("点击[" + (i+1) + "/" + tasklist.length + "] " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
+        sleep(1000);
         // 等待离开任务列表页面
-        if (!common.waitDismiss("text", tasklist[i].BtnName, 10)) {
-            log("等待 " + tasklist[i].Title + " 浏览完成");
-            for (var j = 0; j < 10; j++) {
-                var curPkg = currentPackage();
-                if (curPkg != common.destPackageName) {
-                    //跳其他app了要跳回来
-                    log("currentPackage(): " + curPkg);
-                    app.startActivity({
-                        action: "VIEW",
-                        data: 'openApp.jdMobile://virtual'
-                    })
-                }
-                sleep(1000);
+        log("等待 " + tasklist[i].Title + " 浏览完成");
+        for (var j = 0; j < 10; j++) {
+            var curPkg = currentPackage();
+            if (curPkg != common.destPackageName) {
+                //跳其他app了要跳回来
+                log("currentPackage(): " + curPkg);
+                app.startActivity({
+                    action: "VIEW",
+                    data: 'openApp.jdMobile://virtual'
+                })
             }
-            //回到"更多任务"列表
+            sleep(1000);
+        }
+        //回到"更多任务"列表
+        back();
+        sleep(3000);
+        ret = true;
+        break;
+    }
+    return ret;
+}
+
+//浏览店铺任务
+commonAction.doWalkShopTasks = function (tasklist) {
+    var ret = false;
+    for (var i = 0; i < tasklist.length; i++) {
+        toastLog("点击[" + (i+1) + "/" + tasklist.length + "] " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
+        var taskList = common.waitForText("text", "进店并关注", true, 10);
+        if (taskList == null) {
+            break;
+        }
+
+        var subscribeBtn = text("进店并关注").findOne(1000);
+        if (subscribeBtn != null) {
+            toastLog("点击 进店并关注: " + click(subscribeBtn.bounds().centerX(), subscribeBtn.bounds().centerY()));
+            // 等待离开"进店任务"任务列表页面
+            common.waitDismiss("text", "进店并关注", 10);
+            sleep(5000);
+            //取消关注
+            var btnSubscribe = packageName(common.destPackageName).className("android.widget.ImageView").desc("已关注按钮").findOne(3000);
+            if (btnSubscribe != null) {
+                log("点击 已关注: " + click(btnSubscribe.bounds().centerX(), btnSubscribe.bounds().centerY()));
+                sleep(1000);
+                var btnConfrimUnsub = text("取消关注").findOne(1000);
+                if (btnConfrimUnsub != null) {
+                    log("点击 取消关注: " + btnConfrimUnsub.click());
+                }
+            } else {
+                log("已关注 not found");
+            }
+            //从关注的页面返回
             back();
+            sleep(3000);
+            //离开"进店任务"任务列表页面
+            back();
+            sleep(3000);
+            // 等待离开"进店任务"任务列表页面回到"更多任务"
+            common.waitDismiss("text", "进店并关注", 10);
             ret = true;
             break;
         }
