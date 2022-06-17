@@ -4,10 +4,12 @@ var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
 const todayBeanTag = "获取当日京豆数";
+const signInTag = "签到领京豆";
 const upgradeEarnBeanTag = "升级赚京豆每日任务";
 
 bean.dailyJobs = [];
 bean.dailyJobs.push(todayBeanTag);
+bean.dailyJobs.push(signInTag);
 bean.dailyJobs.push(upgradeEarnBeanTag);
 
 gotoBean = function () {
@@ -354,7 +356,7 @@ getMyNutrients = function () {
     }
 
     common.safeSet(common.nextGetNutrientTimestampTag, newNextGetNutrientCheckTimestamp);
-    log(common.nextGetNutrientTimestampTag + " 设置为: " + common.timestampToTime(newNextGetNutrientCheckTimestamp));
+    log(common.nextGetNutrientTimestampTag + " 设置为: " + common.timestampToTime(newNextGetNutrientCheckTimestamp) + ", " + newNextGetNutrientCheckTimestamp);
 }
 
 getFriendsNutrients = function () {
@@ -491,6 +493,90 @@ bean.calcBeanIncome = function () {
     log(yesterday.Format("yyyy-MM-dd") + ":" + todayBeanTag + ": " + yesterdayBeanNum);
     if (yesterdayBeanNum != null) {
         log(yesterday.Format("yyyy-MM-dd") + " 京豆收益: " + (parseInt(myBeans.parent().child(0).text()) - parseInt(yesterdayBeanNum)));
+    }
+
+    commonAction.backToAppMainPage();
+}
+
+bean.doSignIn = function () {
+    log("bean.doSignIn");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + signInTag);
+    if (done != null) {
+        log(signInTag + " 已做: " + done);
+        return;
+    }
+
+    toast("bean.doSignIn");
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://bean.m.jd.com/rank/index.action","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    var continuousSignInTips = common.waitForText("text", "已连续签到", true, 15);
+    if (continuousSignInTips == null) {
+        commonAction.backToAppMainPage();
+        return;
+    }
+
+    var clickRet = false;
+    var taskFrameNode = continuousSignInTips.parent().parent().parent().parent().parent().parent();
+    var taskFrame = taskFrameNode.child(taskFrameNode.childCount() - 1);
+    var taskList = taskFrame.child(0).child(0).child(0).child(0).child(0);
+    var isPlantBeanDone = taskList.child(0).child(1).child(0).child(0).childCount() == 3;
+    if (!isPlantBeanDone) {
+        clickRet = click(taskList.child(0).bounds().centerX(), taskList.child(0).bounds().centerY());
+        log("点击 种豆得豆: " + clickRet + ", 并等待10s后返回");
+        sleep(10000);
+        back();
+        sleep(3000);
+        isPlantBeanDone = true;
+    }
+
+    var isLotteryDone = taskList.child(2).child(0).child(0).childCount() == 2;
+    if (!isLotteryDone) {
+        clickRet = click(taskList.child(0).bounds().centerX(), taskList.child(0).bounds().centerY());
+        log("点击 抽京豆: " + clickRet + ", 并等待 查看规则 出现，15s超时");
+
+        var ruleTips = common.waitForText("text", "查看规则", true, 15);
+        if (ruleTips == null) {
+            commonAction.backToAppMainPage();
+            return;
+        }
+
+        var rotary = ruleTips.parent().parent().child(0).child(0).child(0);
+        clickRet = click(rotary.bounds().centerX(), rotary.bounds().centerY());
+        log("点击 开始抽奖: " + clickRet + ", 并等待10s");
+
+        sleep(10000);
+        back();
+        sleep(3000);
+        isLotteryDone = true;
+    }
+
+    var isShakeDone = taskList.child(3).child(0).child(0).childCount() == 2;
+    if (!isShakeDone) {
+        clickRet = click(taskList.child(3).bounds().centerX(), taskList.child(0).bounds().centerY());
+        log("点击 摇京豆: " + clickRet + ", 并等待 领取摇盒子次数 出现，15s超时");
+
+        var shakeBtn = common.waitForText("text", "领取摇盒子次数", true, 15);
+        if (shakeBtn == null) {
+            commonAction.backToAppMainPage();
+            return;
+        }
+
+        clickRet = click(shakeBtn.bounds().centerX(), shakeBtn.bounds().centerY());
+        log("点击 领取摇盒子次数: " + clickRet + ", 并等待10s");
+
+        sleep(10000);
+        back();
+        sleep(3000);
+        isShakeDone = true;
+    }
+
+    if (isPlantBeanDone && isLotteryDone && isShakeDone) {
+        common.safeSet(nowDate + ":" + signInTag, "done");
+        toastLog("完成 " + signInTag);
     }
 
     commonAction.backToAppMainPage();

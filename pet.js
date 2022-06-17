@@ -64,7 +64,7 @@ checkDogBowl = function () {
         //喂一次狗粮管3个小时
         var newNextFeedDogFoodCheckTimestamp = new Date().getTime() + 3 * 3600 * 1000;
         common.safeSet(common.nextFeedDogFoodTimestampTag, newNextFeedDogFoodCheckTimestamp);
-        log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp));
+        log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp) + ", " + newNextFeedDogFoodCheckTimestamp);
         //todo确定一下是否需要关闭
         // clickRet = click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY());
         // log("点击 关闭: " + clickRet);
@@ -78,7 +78,7 @@ checkDogBowl = function () {
             if (HHmmss.length == 3) {
                 var newNextFeedDogFoodCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
                 common.safeSet(common.nextFeedDogFoodTimestampTag, newNextFeedDogFoodCheckTimestamp);
-                log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp));
+                log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp) + ", " + newNextFeedDogFoodCheckTimestamp);
             } else {
                 log("HHmmss: " + HHmmss);
             }

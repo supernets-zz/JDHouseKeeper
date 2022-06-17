@@ -5,7 +5,7 @@ var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
 var plusMember = require("./plusMember.js");
-var book = require("./book.js");
+var dailySignIn = require("./dailySignIn.js");
 var coupon99 = require("./coupon99.js");
 var appliance = require("./appliance.js");
 var farm = require("./farm.js");
@@ -168,7 +168,7 @@ function isAllDailyTaskComplete() {
 //    var taskList = [":京东会员每日领京豆", ":种豆得豆每日任务", ":升级赚京豆每日任务", ":宠汪汪每日任务", ":东东农场连续签到", ":东东农场每日任务"];
     var taskList = [];
     taskList.push.apply(taskList, plusMember.dailyJobs);
-    taskList.push.apply(taskList, book.dailyJobs);
+    taskList.push.apply(taskList, dailySignIn.dailyJobs);
     taskList.push.apply(taskList, coupon99.dailyJobs);
     taskList.push.apply(taskList, appliance.dailyJobs);
     taskList.push.apply(taskList, farm.dailyJobs);
@@ -204,11 +204,14 @@ function mainWorker() {
             // 我的
             bean.calcBeanIncome();
 
+            // 签到领京豆
+            bean.doSignIn();
+
             // 我的-> 会员店-> 天天领京豆-> 立即翻牌，每日一次
             plusMember.doSignIn();
 
-            // 京东图书每日签到
-            book.doSignIn();
+            // 各个场馆每日签到
+            dailySignIn.doDailySignIn();
 
             // 券后9.9-> 领券-> 立即签到，每日一次
             coupon99.doSignIn();
