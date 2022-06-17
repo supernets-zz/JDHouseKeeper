@@ -326,7 +326,8 @@ farm.doGetDrops = function () {
             }
             var btnParent = taskItem.child(taskItem.childCount() - 1);  //是其父节点的最后一个子节点
             var btn = btnParent.child(btnParent.childCount() - 1);
-            if (btn.text() != "已完成" &&
+            if (btn.text() != "" &&
+                btn.text() != "已完成" &&
                 btn.text() != "再逛逛" &&
                 btn.text() != "已收集" &&
                 btn.text() != "已领取" &&

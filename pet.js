@@ -3,6 +3,7 @@ var pet = {};
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
+const award618Tag = "宠汪汪逛商品得积分";
 const helpToFeedTag = "宠汪汪帮人喂狗粮";
 
 gotoPet = function () {
@@ -19,6 +20,7 @@ gotoPet = function () {
     //帮忙喂养: levelTips.parent().parent().parent().child(倒数第三个).child(第一个);
     //领狗粮: levelTips.parent().parent().parent().child(倒数第三个).child(第三个);
     //食盆: levelTips.parent().parent().parent().child(第二个);
+    //逛商品得积分: levelTips.parent().parent().parent().child(倒数第二个);
     //喂养: levelTips.parent().parent().parent().child(最后一个);
     return levelTips.parent().parent().parent();
 }
@@ -28,7 +30,8 @@ checkDogBowl = function () {
     if (levelTips == null) {
         return;
     }
-    var dogBowl = levelTips.parent().parent().parent().child(1);
+    var actionBar = levelTips.parent().parent().parent();
+    var dogBowl = actionBar.child(1);
     log("dogBowl.childCount(): " + dogBowl.childCount());
     //子节点个数为2需要喂养
     if (dogBowl.childCount() == 2) {
@@ -69,11 +72,16 @@ checkDogBowl = function () {
     } else if (dogBowl.childCount() == 3) {
         var leftTimeNode = dogBowl.child(dogBowl.childCount() - 1);
         var leftTimeTips = leftTimeNode.child(leftTimeNode.childCount() - 1).text();
+        log("leftTimeTips: " + leftTimeTips);
         if (/\d+小时\d+分\d+秒/.test(leftTimeTips)) {
             var HHmmss = leftTimeTips.match(/\d+/g);
-            var newNextFeedDogFoodCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
-            common.safeSet(common.nextFeedDogFoodTimestampTag, newNextFeedDogFoodCheckTimestamp);
-            log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp));
+            if (HHmmss.length == 3) {
+                var newNextFeedDogFoodCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                common.safeSet(common.nextFeedDogFoodTimestampTag, newNextFeedDogFoodCheckTimestamp);
+                log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp));
+            } else {
+                log("HHmmss: " + HHmmss);
+            }
         }
     }
 
@@ -176,8 +184,8 @@ doGetDogFoodTasks = function (actionBar) {
                 btn.text() != "去参与" && 
                 btn.text() != "明天再来" &&
                 btn.text() != "已完成" &&
-                btn.text() != "去喂食" &&
-                title.indexOf("京东电器") == -1) {
+                btn.text() != "去喂食" ||
+                title.indexOf("京东电器") != -1 && btn.text() == "领取") {
                 var obj = {};
                 obj.Title = title;
                 obj.Tips = tips;
@@ -242,6 +250,273 @@ doGetDogFoodTasks = function (actionBar) {
         sleep(1000);
     }
 }
+/*
+doAward618 = function (actionBar) {
+    log("pet.doAward618");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + award618Tag);
+    if (done != null) {
+        log(award618Tag + " 已做: " + done);
+        return;
+    }
+
+    toast("pet.doAward618");
+    var get618AwardBtn = actionBar.child(actionBar.childCount() - 2);
+    var clickRet = click(get618AwardBtn.bounds().centerX(), get618AwardBtn.bounds().centerY());
+    log("点击 逛商品得积分: " + clickRet + ", 并等待 /已浏览\d+\/\d+/ 出现, 15s超时")
+
+    var progressTips = common.waitForTextMatches(/已浏览\d+\/\d+/, true, 15);
+    if (progressTips == null) {
+        gotoPet();
+        return;
+    }
+
+    sleep(3000);
+    var startTick = new Date().getTime();
+    for (;;) {
+        var progressTips = textMatches(/已浏览\d+\/\d+/).findOne(1000);
+        if (progressTips == null) {
+            log("/已浏览\d+\/\d+/ not found");
+            gotoPet();
+            return;
+        }
+
+        if (progressTips.text() == "已浏览10/10") {
+            common.safeSet(nowDate + ":" + award618Tag, "done");
+            toastLog("完成 " + award618Tag);
+            gotoPet();
+            return;
+        }
+
+        var todoValidMerchantNames = [];    //未浏览且可见的商品名称
+        var todoMerchantNodes = [];
+        var merchantListFrame = progressTips.parent().child(progressTips.parent().childCount() - 1);
+        var totalMerchantNodes = merchantListFrame.child(merchantListFrame.childCount() - 1);
+        for (var i = 0; i < totalMerchantNodes.childCount(); i++) {
+            var merchantPicNode = totalMerchantNodes.child(i).child(0);
+            var merchantNameNode = totalMerchantNodes.child(i).child(1);
+            log("[" + (i+1) + "/" + totalMerchantNodes.childCount() + "] (" + totalMerchantNodes.child(i).bounds().centerX() + ", " + totalMerchantNodes.child(i).bounds().centerY() + "), " + merchantPicNode.childCount() + ": " + merchantNameNode.text());
+            if (merchantNameNode.bounds().height() > 50 && merchantPicNode.childCount() == 1) {
+                todoValidMerchantNames.push(merchantNameNode.text());
+                todoMerchantNodes.push(totalMerchantNodes.child(i));
+            }
+        }
+
+        toastLog("商品数: " + totalMerchantNodes.childCount() + ", 未浏览且可见: " + todoValidMerchantNames.length + ", " + todoValidMerchantNames);
+        if (todoValidMerchantNames.length == 0) {
+            log("往上划到底: " + swipe(device.width / 2, device.height * 15 / 16, device.width / 2, device.height * 1 / 16, 1000));
+            sleep(5000);
+            continue;
+        }
+
+        clickRet = click(todoMerchantNodes[0].bounds().centerX(), todoMerchantNodes[0].bounds().centerY());
+        var merchantName = text(todoValidMerchantNames[0]).visibleToUser(true).findOne(1000);
+        log(merchantName.parent().bounds().centerX(), merchantName.parent().bounds().centerY());
+        log("点击 " + todoValidMerchantNames[0] + ", (" + todoMerchantNodes[0].bounds().centerX() + "," + todoMerchantNodes[0].bounds().centerY() + "): " + clickRet);
+        // 等待离开"逛商品得积分"任务列表页面
+        common.waitDismiss("textContains", "已浏览", 10);
+        sleep(10000);
+        //从浏览的商品返回
+        back();
+        sleep(3000);
+
+        if (new Date().getTime() - startTick > 5 * 60 * 1000) {
+            break;
+        }
+    }
+
+    gotoPet();
+}
+*/
+
+doAward618 = function (actionBar) {
+    log("pet.doAward618");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + award618Tag);
+    if (done != null) {
+        log(award618Tag + " 已做: " + done);
+        return;
+    }
+
+    toast("pet.doAward618");
+    var get618AwardBtn = actionBar.child(actionBar.childCount() - 2);
+    var clickRet = click(get618AwardBtn.bounds().centerX(), get618AwardBtn.bounds().centerY());
+    log("点击 逛商品得积分: " + clickRet + ", 并等待 /已浏览\d+\/\d+/ 出现, 15s超时")
+
+    var progressTips = common.waitForTextMatches(/已浏览\d+\/\d+/, true, 15);
+    if (progressTips == null) {
+        gotoPet();
+        return;
+    }
+
+    sleep(3000);
+    var todoMerchantNames = [];    //未浏览且可见的商品名称
+    var merchantListFrame = progressTips.parent().child(progressTips.parent().childCount() - 1);
+    var totalMerchantNodes = merchantListFrame.child(merchantListFrame.childCount() - 1);
+    for (var i = 0; i < totalMerchantNodes.childCount(); i++) {
+        var merchantPicNode = totalMerchantNodes.child(i).child(0);
+        var merchantNameNode = totalMerchantNodes.child(i).child(1);
+        log("[" + (i+1) + "/" + totalMerchantNodes.childCount() + "] (" + totalMerchantNodes.child(i).bounds().centerX() + ", " + totalMerchantNodes.child(i).bounds().centerY() + "), " + merchantPicNode.childCount() + ": " + merchantNameNode.text());
+        if (merchantPicNode.childCount() == 1) {
+            todoMerchantNames.push(merchantNameNode.text());
+        }
+    }
+
+    for (var k = 0; k < todoMerchantNames.length; k++) {
+        var startTick = new Date().getTime();
+        for (;;) {
+            var progressTips = textMatches(/已浏览\d+\/\d+/).findOne(1000);
+            if (progressTips == null) {
+                log("/已浏览\d+\/\d+/ not found");
+                gotoPet();
+                return;
+            }
+
+            if (progressTips.text() == "已浏览10/10") {
+                common.safeSet(nowDate + ":" + award618Tag, "done");
+                toastLog("完成 " + award618Tag);
+                gotoPet();
+                return;
+            }
+
+            log(progressTips.text());
+
+            var merchantNames = text(todoMerchantNames[k]).find();
+            var vaildMerchantNames = text(todoMerchantNames[k]).visibleToUser(true).find();
+
+            toastLog(merchantNames.length + ", 可视: " + vaildMerchantNames.length);
+
+            if (vaildMerchantNames.length > 0) {
+                var btn = vaildMerchantNames[0].parent();
+                toastLog("点击(" + btn.bounds().centerX() + "," + btn.bounds().centerY() + "): " + click(btn.bounds().centerX(), btn.bounds().centerY()));
+                sleep(10000);
+                back();
+                sleep(3000);
+            } else {
+                log("往上划到底: " + swipe(device.width / 2, device.height * 15 / 16, device.width / 2, device.height * 1 / 16, 1000));
+                sleep(5000);
+            }
+
+            if (new Date().getTime() - startTick > 5 * 60 * 1000) {
+                break;
+            }
+        }
+    }
+
+    gotoPet();
+}
+
+doHelpToFeed = function () {
+    log("pet.doHelpToFeed");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + helpToFeedTag);
+    if (done != null) {
+        log(helpToFeedTag + " 已做: " + done);
+        return;
+    }
+
+    toast("pet.doHelpToFeed")
+    //不在时间范围内不帮喂
+    var inTheMorning = common.checkAuditTime("06:00", "10:30");
+    var atNoon = common.checkAuditTime("11:30", "15:00");
+    var atNight = common.checkAuditTime("17:00", "21:00");
+    if (!inTheMorning && !atNoon && !atNight) {
+        log("不在帮忙喂时间段内");
+        return;
+    }
+
+    //抢狗粮
+    for (;;) {
+        var levelTips = textMatches(/LV\.\d+\/\d+/).visibleToUser(true).findOne(1000);
+        if (levelTips == null) {
+            return;
+        }
+
+        var actionBar = levelTips.parent().parent().parent();
+        var helpToFeedBtn = actionBar.child(actionBar.childCount() - 3).child(0);
+        var clickRet = click(helpToFeedBtn.bounds().centerX(), helpToFeedBtn.bounds().centerY());
+        log("点击 帮忙喂养(" + helpToFeedBtn.bounds().centerX() + ", " + helpToFeedBtn.bounds().centerY() + "): " + clickRet + ", 并等待 三餐时间拜访好友小家 出现, 15s超时");
+        sleep(2000);
+
+        var helpTaskTips = common.waitForText("textContains", "三餐时间拜访好友小家", true, 15);
+        if (helpTaskTips == null) {
+            return;
+        }
+
+        var closeBtn = helpTaskTips.parent().child(helpTaskTips.parent().childCount() - 2);
+        var totalTasks = packageName(common.destPackageName).text("抢").find();
+        log("可抢狗粮数: " + totalTasks.length);
+        if (totalTasks.length == 0) {
+            log("没有可抢的狗粮了");
+            break;
+        }
+
+        clickRet = click(totalTasks[0].parent().bounds().centerX(), totalTasks[0].parent().bounds().centerY());
+        log("点击 " + totalTasks[0].parent().child(2).text() + ": " + clickRet);
+        sleep(5000);
+
+        var helpLevelTips = textMatches(/LV\.\d+\/\d+/).findOne(1000);
+        var helpActionBar = helpLevelTips.parent().parent().parent();
+        //狗粮: helpActionBar.child(1);
+        //回家: helpActionBar.child(倒数第二个);
+        //帮Ta喂养: helpActionBar.child(最后一个);
+        var dogFood = helpActionBar.child(1);
+        clickRet = click(dogFood.bounds().centerX(), dogFood.bounds().centerY());
+        log("点击 " + dogFood.child(0).child(1).text() + "g: " + clickRet);
+        sleep(2000);
+
+        var backHomeBtn = helpActionBar.child(helpActionBar.childCount() - 2);
+        clickRet = click(backHomeBtn.bounds().centerX(), backHomeBtn.bounds().centerY());
+        log("点击 回家: " + clickRet);
+        sleep(3000);
+
+        clickRet = click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY());
+        log("关闭帮忙喂养任务列表: " + clickRet);
+        sleep(2000);
+    }
+
+    //帮忙喂一次狗粮
+    var totalTasks = packageName(common.destPackageName).text("可帮喂").find();
+    log("可帮喂个数: " + totalTasks.length);
+    if (totalTasks.length == 0) {
+        return;
+    }
+
+    clickRet = click(totalTasks[0].parent().bounds().centerX(), totalTasks[0].parent().bounds().centerY());
+    log("点击 " + totalTasks[0].parent().child(2).text() + ": " + clickRet);
+    sleep(5000);
+
+    var helpLevelTips = textMatches(/LV\.\d+\/\d+/).findOne(1000);
+    var helpActionBar = helpLevelTips.parent().parent().parent();
+    //狗粮: helpActionBar.child(1);
+    //回家: helpActionBar.child(倒数第二个);
+    //帮Ta喂养: helpActionBar.child(最后一个);
+    var helpToFeed = helpActionBar.child(helpActionBar.childCount() - 1);
+    clickRet = click(helpToFeed.bounds().centerX(), helpToFeed.bounds().centerY());
+    log("点击 帮ta喂养: " + clickRet);
+    sleep(2000);
+
+    var confirmBtn = text("确定").findOne(1000);
+    if (confirmBtn == null) {
+        return;
+    }
+
+    clickRet = click(confirmBtn.bounds().centerX(), confirmBtn.bounds().centerY());
+    log("点击 确认: " + clickRet);
+    sleep(5000);
+
+    var backHomeBtn = helpActionBar.child(helpActionBar.childCount() - 2);
+    clickRet = click(backHomeBtn.bounds().centerX(), backHomeBtn.bounds().centerY());
+    log("点击 回家: " + clickRet);
+    sleep(3000);
+
+    clickRet = click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY());
+    log("关闭帮忙喂养任务列表: " + clickRet);
+    sleep(2000);
+
+    common.safeSet(nowDate + ":" + helpToFeedTag, "done");
+    toastLog("完成 " + helpToFeedTag);
+}
 
 pet.doRoutine = function () {
     toastLog("pet.doRoutine");
@@ -252,9 +527,27 @@ pet.doRoutine = function () {
         return;
     }
 
-    doGetDogFoodTasks(actionBar);
+    var nextFeedDogFoodCheckTS = parseInt(common.safeGet(common.nextFeedDogFoodTimestampTag));
+    log(common.nextFeedDogFoodTimestampTag + ": " + common.timestampToTime(nextFeedDogFoodCheckTS));
+    if (!isNaN(nextFeedDogFoodCheckTS) && new Date().getTime() > nextFeedDogFoodCheckTS) {
+        sleep(5000);
 
-    checkDogBowl();
+        checkDogBowl();
+
+        doGetDogFoodTasks(actionBar);
+
+        // doAward618(actionBar);
+
+        doHelpToFeed();
+    } else {
+        doGetDogFoodTasks(actionBar);
+
+        checkDogBowl();
+
+        // doAward618(actionBar);
+
+        doHelpToFeed();
+    }
 
     commonAction.backToAppMainPage();
 }

@@ -167,19 +167,25 @@ bean.doUpgradeBeans = function () {
             var taskItem = tv.parent();
             var title = taskItem.child(1).text();
             var tips = taskItem.child(2).text();
-            var btn = taskItem.child(taskItem.childCount() - 1).child(1);
-            if (btn.text() != "已完成" &&
-                title.indexOf("双签领豆") == -1 &&
-                !/升级.*会员.*/.test(title)) {
-                var obj = {};
-                obj.Title = title;
-                obj.Tips = tips;
-                obj.BtnName = btn.text();
-                obj.Button = btn;
-                oneWalkTaskList.push(obj);
-                log("未完成任务" + oneWalkTaskList.length + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + tips);
-            } else {
-                log("跳过任务: " + title + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + tips);
+            var lastNode = taskItem.child(taskItem.childCount() - 1);
+            var btn = null;
+            for (var i = 0; i < lastNode.childCount(); i++) {
+                if (lastNode.child(i).className() == "android.widget.TextView") {
+                    btn = lastNode.child(i);
+                }
+            }
+            if (btn != null) {
+                if (btn.text() != "" && btn.text() != "已完成" && title.indexOf("双签领豆") == -1 && !/升级.*会员.*/.test(title)) {
+                    var obj = {};
+                    obj.Title = title;
+                    obj.Tips = tips;
+                    obj.BtnName = btn.text();
+                    obj.Button = btn;
+                    oneWalkTaskList.push(obj);
+                    log("未完成任务" + oneWalkTaskList.length + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + tips);
+                } else {
+                    log("跳过任务: " + title + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + tips);
+                }
             }
         });
 
@@ -249,7 +255,8 @@ doGetNutrientTasks = function (growthTips) {
             var progress = taskItem.child(2).child(taskItem.child(2).childCount() - 1).text();
             var tips = taskItem.child(taskItem.childCount() - 2).text();
             var btn = taskItem.child(taskItem.childCount() - 1).child(0);
-            if (btn.text() != "去邀请" && 
+            if (btn.text() != "" && 
+                btn.text() != "去邀请" && 
                 btn.text() != "去签到" && 
                 btn.text() != "已完成" &&
                 title != "免费水果") {
@@ -323,9 +330,14 @@ getMyNutrients = function () {
             } else {
                 bubble = tv.parent().parent().parent();
                 title = bubble.child(bubble.childCount() - 1).child(0).text();
+                log("营养液剩余时间: " + title)
                 if (/剩\d+:\d+:\d+/.test(title)) {
                     var HHmmss = title.match(/\d+/g);
-                    newNextGetNutrientCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                    if (HHmmss.length == 3) {
+                        newNextGetNutrientCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                    } else {
+                        log("HHmmss: " + HHmmss);
+                    }
                 }
             }
         });
@@ -344,6 +356,12 @@ getMyNutrients = function () {
 }
 
 getFriendsNutrients = function () {
+    var curDate = new Date().Format("yyyy/MM/dd");
+    var morningBeginTime = new Date(curDate + " 07:00:00").getTime();
+    if (new Date().getTime() < morningBeginTime) {
+        return;
+    }
+
     //上划一点点露出下面的收取营养液
     var startTick = new Date().getTime();
     for (;;) {
