@@ -201,6 +201,9 @@ function mainWorker() {
             toastLog(common.destAppName + " is unknown status");
             captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
         } else {
+            // 我的
+            bean.calcBeanIncome();
+
             // 我的-> 会员店-> 天天领京豆-> 立即翻牌，每日一次
             plusMember.doSignIn();
 

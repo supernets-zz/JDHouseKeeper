@@ -3,9 +3,11 @@ var bean = {};
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
+const todayBeanTag = "获取当日京豆数";
 const upgradeEarnBeanTag = "升级赚京豆每日任务";
 
 bean.dailyJobs = [];
+bean.dailyJobs.push(todayBeanTag);
 bean.dailyJobs.push(upgradeEarnBeanTag);
 
 gotoBean = function () {
@@ -445,6 +447,51 @@ bean.doRoutine = function () {
     getMyNutrients();
 
     getFriendsNutrients();
+
+    commonAction.backToAppMainPage();
+}
+
+bean.calcBeanIncome = function () {
+    log("bean.calcBeanIncome");
+    // 我的
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var beanNum = common.safeGet(nowDate + ":" + todayBeanTag);
+    if (beanNum != null) {
+        log(todayBeanTag + " " + nowDate + ": " + beanNum);
+        return;
+    }
+
+    toast("bean.calcBeanIncome");
+    var mineTab = text("我的").packageName(common.destPackageName).findOne(30000);
+    if (mineTab == null){
+        toastLog("我的 tab not exist");
+        commonAction.backToAppMainPage();
+        return;
+    }
+
+    var clickRet = mineTab.parent().child(2).click();
+    log("点击 我的: " + clickRet + ", 并等待 京豆 出现, 15s超时");
+    if (!clickRet) {
+        commonAction.backToAppMainPage();
+        return;
+    }
+
+    var myBeans = common.waitForText("text", "京豆", true, 15);
+    if (myBeans == null) {
+        commonAction.backToAppMainPage();
+        return;
+    }
+
+    common.safeSet(nowDate + ":" + todayBeanTag, myBeans.parent().child(0).text());
+    toastLog(nowDate + ":" + todayBeanTag + ": " + myBeans.parent().child(0).text());
+
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var yesterdayBeanNum = common.safeGet(yesterday.Format("yyyy-MM-dd") + ":" + todayBeanTag);
+    log(yesterday.Format("yyyy-MM-dd") + ":" + todayBeanTag + ": " + yesterdayBeanNum);
+    if (yesterdayBeanNum != null) {
+        log(yesterday.Format("yyyy-MM-dd") + " 京豆收益: " + (parseInt(myBeans.parent().child(0).text()) - parseInt(yesterdayBeanNum)));
+    }
 
     commonAction.backToAppMainPage();
 }
