@@ -13,6 +13,7 @@ const searchContentAppreciatorSignInTag = "寻找内容鉴赏官每日签到";
 const shoeStoreSignInTag = "鞋靴馆每日签到";
 const bagStoreSignInTag = "箱包馆每日签到";
 const campusSignInTag = "花YOUNG每日签到";
+const personalCareSignInTag = "个人护理每日签到";
 
 dailySignIn.dailyJobs = [];
 dailySignIn.dailyJobs.push(dailySignInTag);
@@ -46,6 +47,9 @@ doSignIn = function (tag, url) {
         log("点击 签到: " + clickRet);
         sleep(1000);
     }
+
+    back();
+    sleep(3000);
 }
 
 doMotherAndBabySignIn = function () {
@@ -544,6 +548,43 @@ doCampusSignIn = function () {
     sleep(3000);
 }
 
+doPersonalCareSignIn = function () {
+    log("dailySignIn.doPersonalCareSignIn");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + personalCareSignInTag);
+    if (done != null) {
+        log(personalCareSignInTag + " 已做: " + done);
+        return;
+    }
+
+    toast("dailySignIn.doPersonalCareSignIn");
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://3.cn/1-wQRUxr?_ts=1655559631280&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    var myJDBeanTips = common.waitForText("textContains", "我的京豆", true, 30);
+    if (myJDBeanTips == null) {
+        back();
+        sleep(3000);
+        return;
+    }
+
+    var signFrame = myJDBeanTips.parent();
+    var signBtn = signFrame.child(signFrame.childCount() - 2);
+    if (signBtn.text() == "今日已签到") {
+        common.safeSet(nowDate + ":" + personalCareSignInTag, "done");
+        toastLog("完成 " + personalCareSignInTag);
+    } else {
+        clickRet = click(signBtn.bounds().centerX(), signBtn.bounds().centerY());
+        log("点击 立即翻牌: " + clickRet);
+        sleep(3000);
+    }
+
+    back();
+    sleep(3000);
+}
+
 isAllSignInComplete = function () {
     var nowDate = new Date().Format("yyyy-MM-dd");
     for (var i = 0; i < dailySignIn.signInTags.length; i++) {
@@ -614,6 +655,9 @@ dailySignIn.doDailySignIn = function () {
 
     dailySignIn.signInTags.push(campusSignInTag);
     doCampusSignIn();
+
+    dailySignIn.signInTags.push(personalCareSignInTag);
+    doPersonalCareSignIn();
 
     if (isAllSignInComplete()) {
         common.safeSet(nowDate + ":" + dailySignInTag, "done");
