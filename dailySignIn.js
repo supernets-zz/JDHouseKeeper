@@ -1,6 +1,5 @@
 var dailySignIn = {};
 
-const { waitForText } = require("./common.js");
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
@@ -17,6 +16,7 @@ const campusSignInTag = "花YOUNG每日签到";
 const personalCareSignInTag = "个人护理每日签到";
 const favarite618TogetherSignInTag = "618和你一起种草每日签到"; //6月22日过期
 const everydayRedEnvelopesSignInTag = "天天红包每日签到";
+const collectCubeSignInTag = "集魔方赢大奖";
 
 dailySignIn.dailyJobs = [];
 dailySignIn.dailyJobs.push(dailySignInTag);
@@ -723,6 +723,86 @@ doEverydayRedEnvelopesSignIn = function () {
     sleep(3000);
 }
 
+doCollectCubeSignIn = function () {
+    log("dailySignIn.doCollectCubeSignIn");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + collectCubeSignInTag);
+    if (done != null) {
+        log(collectCubeSignInTag + " 已做: " + done);
+        return;
+    }
+
+    toast("dailySignIn.doCollectCubeSignIn");
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/2K2aV0M","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    sleep(10000);
+    var signBtn = text("立即签到").findOne(1000);
+    if (signBtn != null) {
+        log("点击 立即签到: " + signBtn.click());
+        sleep(1000);
+        var dlgFrame = signBtn.parent().parent();
+        var closeBtn = dlgFrame.child(dlgFrame.childCount() - 1);
+        log("点击 关闭: " + closeBtn.click());
+        sleep(1000);
+    }
+
+    var startTick = new Date().getTime();
+    for (;;) {
+        var cubeNumTips = textMatches(/已有\d+个魔方/).findOne(1000);
+        if (cubeNumTips == null) {
+            back();
+            sleep(3000);
+            return;
+        }
+
+        var actionBarParent = cubeNumTips.parent().parent();
+        var cubeNum = cubeNumTips.text().match(/\d+/);
+        log("已有魔方数: " + cubeNum[0] + ", " + actionBarParent.child(actionBarParent.childCount() - 2).text());
+
+        var actionBar = actionBarParent.child(actionBarParent.childCount() - 1);
+        var btn1 = actionBar.child(0).child(0);
+        var btn2 = actionBar.child(0).child(1);
+        var btn3 = actionBar.child(0).child(2);
+        log(btn1.child(btn1.childCount() - 1).text() + ": " + btn1.child(0).className());
+        log(btn2.child(btn2.childCount() - 1).text() + ": " + btn2.child(0).className());
+        log(btn3.child(btn3.childCount() - 1).text() + ": " + btn3.child(0).className());
+
+        if (btn1.child(0).className() == "android.widget.Image" && 
+            btn2.child(0).className() == "android.widget.Image" && 
+            btn3.child(0).className() == "android.widget.Image") {
+            toastLog("完成魔方碎片收集");
+            break;
+        }
+
+        if (btn1.child(0).className() == "android.view.View") {
+            var objs = [];
+            var obj = {};
+            obj.Title = btn1.child(btn1.childCount() - 1).text();
+            obj.BtnName = obj.Title;
+            obj.Button = btn1;
+            objs.push(obj);
+            commonAction.doOneWalkTasks(objs);
+            sleep(2000);
+        }
+
+        if (new Date().getTime() - startTick > 2 * 60 * 1000) {
+            log("timeout");
+            back();
+            sleep(3000);
+            return;
+        }
+    }
+
+    common.safeSet(nowDate + ":" + collectCubeSignInTag, "done");
+    toastLog("完成 " + collectCubeSignInTag);
+
+    back();
+    sleep(3000);
+}
+
 isAllSignInComplete = function () {
     var nowDate = new Date().Format("yyyy-MM-dd");
     for (var i = 0; i < dailySignIn.signInTags.length; i++) {
@@ -802,6 +882,9 @@ dailySignIn.doDailySignIn = function () {
 
     dailySignIn.signInTags.push(everydayRedEnvelopesSignInTag);
     doEverydayRedEnvelopesSignIn();
+
+    dailySignIn.signInTags.push(collectCubeSignInTag);
+    doCollectCubeSignIn();
 
     if (isAllSignInComplete()) {
         common.safeSet(nowDate + ":" + dailySignInTag, "done");
