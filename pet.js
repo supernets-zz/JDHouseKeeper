@@ -137,9 +137,9 @@ doSubscibeChannelTasks = function (tasklist) {
 doGetDogFoodTasks = function (actionBar) {
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     for (;;) {
-        var getDogFoodBtn = actionBar.child(actionBar.childCount() - 3).child(2);
+        var getDogFoodBtn = actionBar.child(actionBar.childCount() - 2).child(2);
         var clickRet = click(getDogFoodBtn.bounds().centerX(), getDogFoodBtn.bounds().centerY());
-        log("点击 领狗粮(" + getDogFoodBtn.bounds().centerX() + ", " + getDogFoodBtn.bounds().centerY() + "): " + clickRet + ", 并等待 做任务得狗粮 出现, 15s超时");
+        toastLog("点击 领狗粮(" + getDogFoodBtn.bounds().centerX() + ", " + getDogFoodBtn.bounds().centerY() + "): " + clickRet + ", 并等待 做任务得狗粮 出现, 15s超时");
         sleep(2000);
 
         var foodTaskTips = common.waitForText("textContains", "做任务得狗粮", true, 15);
@@ -261,10 +261,9 @@ doAward618 = function (actionBar) {
         return;
     }
 
-    toast("pet.doAward618");
     var get618AwardBtn = actionBar.child(actionBar.childCount() - 2);
     var clickRet = click(get618AwardBtn.bounds().centerX(), get618AwardBtn.bounds().centerY());
-    log("点击 逛商品得积分: " + clickRet + ", 并等待 /已浏览\d+\/\d+/ 出现, 15s超时")
+    toastLog("点击 逛商品得积分: " + clickRet + ", 并等待 /已浏览\d+\/\d+/ 出现, 15s超时")
 
     var progressTips = common.waitForTextMatches(/已浏览\d+\/\d+/, true, 15);
     if (progressTips == null) {
@@ -476,13 +475,11 @@ pet.doRoutine = function () {
     var nextFeedDogFoodCheckTS = parseInt(common.safeGet(common.nextFeedDogFoodTimestampTag));
     log(common.nextFeedDogFoodTimestampTag + ": " + common.timestampToTime(nextFeedDogFoodCheckTS));
     if (!isNaN(nextFeedDogFoodCheckTS) && new Date().getTime() > nextFeedDogFoodCheckTS) {
-        sleep(5000);
-
         checkDogBowl();
 
         doGetDogFoodTasks(actionBar);
 
-        doAward618(actionBar);
+        //doAward618(actionBar);
 
         doHelpToFeed();
     } else {
@@ -490,7 +487,7 @@ pet.doRoutine = function () {
 
         checkDogBowl();
 
-        doAward618(actionBar);
+        //doAward618(actionBar);
 
         doHelpToFeed();
     }

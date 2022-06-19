@@ -1,5 +1,6 @@
 var dailySignIn = {};
 
+const { waitForText } = require("./common.js");
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
@@ -14,6 +15,8 @@ const shoeStoreSignInTag = "鞋靴馆每日签到";
 const bagStoreSignInTag = "箱包馆每日签到";
 const campusSignInTag = "花YOUNG每日签到";
 const personalCareSignInTag = "个人护理每日签到";
+const favarite618TogetherSignInTag = "618和你一起种草每日签到"; //6月22日过期
+const everydayRedEnvelopesSignInTag = "天天红包每日签到";
 
 dailySignIn.dailyJobs = [];
 dailySignIn.dailyJobs.push(dailySignInTag);
@@ -43,8 +46,7 @@ doSignIn = function (tag, url) {
         common.safeSet(nowDate + ":" + tag, "done");
         toastLog("完成 " + tag);
     } else {
-        var clickRet = signBtn.click();
-        log("点击 签到: " + clickRet);
+        log("点击 " + signBtn.text() + ": " + signBtn.click());
         sleep(1000);
     }
 
@@ -85,7 +87,7 @@ doMotherAndBabySignIn = function () {
     for (;;) {
         var tips = text("赚京豆抵现金").visibleToUser(true).findOne(1000);
         if (tips == null) {
-            swipe(device.width / 2, device.height * 7 / 8, device.width / 2, device.height * 1 / 8, 800);
+            log("上划屏幕直到 赚京豆抵现金 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 4 / 7), 300));
             sleep(1000);
         } else {
             break;
@@ -109,7 +111,7 @@ doMotherAndBabySignIn = function () {
         var signBtn = signFrame.child(signFrame.childCount() - 2).child(0);
         clickRet = click(signBtn.bounds().centerX(), signBtn.bounds().centerY());
         log("点击 立即翻牌: " + clickRet);
-        sleep(3000);
+        sleep(5000);
     }
 
     back();
@@ -168,42 +170,6 @@ doWineStoreSignIn = function () {
     sleep(3000);
 }
 
-do618FavariteStreet = function () {
-    log("dailySignIn.do618FavariteStreet");
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var done = common.safeGet(nowDate + ":" + favariteStreetSignInTag);
-    if (done != null) {
-        log(favariteStreetSignInTag + " 已做: " + done);
-        return;
-    }
-
-    toast("dailySignIn.do618FavariteStreet");
-    app.startActivity({
-        action: "VIEW",
-        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/Nt90tCn","M_sourceFrom":"mxz","msf_type":"auto"}'
-    });
-
-    //等我的金币出现
-    var myCoinsTips = common.waitForText("text", "当前金币", true, 30);
-    if (myCoinsTips == null) {
-        back();
-        sleep(3000);
-        return;
-    }
-
-    sleep(5000);
-    var welcomeBtn = text("确定").findOne(1000);
-    if (welcomeBtn != null) {
-        log("点击 欢迎来到种草街 对话框的确定: " + welcomeBtn.click());
-    }
-
-    var actionBar = myCoinsTips.parent();
-    var coinsNum = actionBar.child(actionBar.childCount() - 1);
-    log(myCoinsTips.text() + ": " + coinsNum.text());
-    var collectCoinsBtn = actionBar.child(0);
-    var lotteryBtn = actionBar.child(1);
-}
-
 doJDGoldenRankSignIn = function () {
     log("dailySignIn.doJDGoldenRankSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");
@@ -219,14 +185,14 @@ doJDGoldenRankSignIn = function () {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/ZCTzSMx","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var tips = common.waitForText("text", "必买京东电器金榜", true, 15);
+    var tips = common.waitForText("text", "/2022年", true, 15);
     if (tips == null) {
         back();
         sleep(3000);
     }
+
     sleep(5000);
-    var taskBtnParent = tips.parent().parent().parent().parent().parent().parent();
-    var taskBtn = taskBtnParent.child(0).child(1).child(3);
+    var taskBtn = tips.parent().parent().child(3);
     var clickRet = taskBtn.click();
     if (clickRet) {
         common.safeSet(nowDate + ":" + jdGoldenRankSignInTag, "done");
@@ -320,12 +286,12 @@ doGoldenRankCampBonus = function() {
     sleep(2000);
 
     var startTick = new Date().getTime();
-    var totalTasks = textContains("浏览").find();
-    log("总任务数: " + totalTasks.length);
+    var totalTasks = textMatches(/浏览.*任务/).find();
     var dones = [];
+    //todo需要关闭任务列表再打开，progress没更新
     while (dones.length != totalTasks.length) {
         dones = [];
-        var taskList = textContains("浏览").find();
+        var taskList = textMatches(/浏览.*任务/).find();
         for (var i = 0; i < taskList.length; i++) {
             var taskItem = taskList[i].parent();
             var title = taskItem.child(1);
@@ -381,7 +347,7 @@ doSearchContentAppreciatorSignIn = function () {
     sleep(5000);
     var signBtn = tips.parent().child(tips.parent().childCount() - 1);
     if (signBtn.text() == "每日签到领京豆") {
-        log("点击 每日签到领京豆: " + signBtn.click());
+        log("点击 " + signBtn.text() + ": " + signBtn.click());
         sleep(2000);
         back();
         sleep(3000);
@@ -585,6 +551,178 @@ doPersonalCareSignIn = function () {
     sleep(3000);
 }
 
+doFavarite618TogetherSignIn = function () {
+    log("dailySignIn.doFavarite618TogetherSignIn");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + favarite618TogetherSignInTag);
+    if (done != null) {
+        log(favarite618TogetherSignInTag + " 已做: " + done);
+        return;
+    }
+
+    toast("dailySignIn.doFavarite618TogetherSignIn");
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/cCiyAup","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    var ruleTips = common.waitForText("text", "618和你一起种草", false, 15);
+    if (ruleTips == null) {
+        back();
+        sleep(3000);
+    }
+
+    var startTick = new Date().getTime();
+    for (;;) {
+        ruleTips = text("活动规则").visibleToUser(true).findOne(1000);
+        if (ruleTips == null) {
+            log("上划屏幕直到 活动规则 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 4 / 7), 300));
+            sleep(1000);
+        } else {
+            break;
+        }
+
+        log("pass " + parseInt((new Date().getTime() - startTick) / 1000) + "s");
+        if (new Date().getTime() - startTick > 30 * 1000) {
+            log("timeout");
+            break;
+        }
+    }
+
+    var signFrame = ruleTips.parent();
+    var signBtn = signFrame.child(signFrame.childCount() - 1).child(1);
+    log(signBtn.text());
+    if (signBtn.text() != "今日已签") {
+        log("点击 " + signBtn.text() + ": " + signBtn.click());
+        sleep(1000);
+    }
+
+    common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
+    toastLog("完成 " + favarite618TogetherSignInTag);
+
+    back();
+    sleep(3000);
+}
+
+doEverydayRedEnvelopesSignIn = function () {
+    log("dailySignIn.doEverydayRedEnvelopesSignIn");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + everydayRedEnvelopesSignInTag);
+    if (done != null) {
+        log(everydayRedEnvelopesSignInTag + " 已做: " + done);
+        return;
+    }
+
+    toast("dailySignIn.doEverydayRedEnvelopesSignIn");
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://h5.m.jd.com/babelDiy/Zeus/CvMVbdFGXPiWFFPCc934RiJfMPu/index.html?babelChannel=ttt6&ad_od=share&cu=true&utm_source=m.sxqq.com&utm_medium=jingfen&utm_campaign=t_13297_&utm_term=35c69d6963324f049276c959a8ceedca","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    var chanceNumTips = common.waitForTextMatches(/还剩\d+次机会/, true, 15);
+    if (chanceNumTips == null) {
+        back();
+        sleep(3000);
+        return;
+    }
+
+    var totalTasks = packageName(common.destPackageName).text("每日浏览活动8秒，送1次抽奖机会").find();
+    var swipeHeight = totalTasks[1].bounds().top - totalTasks[0].bounds().top;
+    log("上划屏幕: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height * 7 / 8) - swipeHeight * totalTasks.length, 500));
+    sleep(2000);
+
+    var startTick = new Date().getTime();
+    for (;;) {
+        var oneWalkTaskList = [];   //浏览任务列表，浏览完成后返回
+        var doneTaskList = [];
+        var totalTasks = packageName(common.destPackageName).text("每日浏览活动8秒，送1次抽奖机会").visibleToUser(true).find();
+        toastLog("任务数: " + totalTasks.length);
+    
+        if (totalTasks.length == 0) {
+            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            back();
+            sleep(3000);
+            return;
+        }
+    
+        totalTasks.forEach(function(tv) {
+            var taskItem = tv.parent();
+            var title = taskItem.child(1).text();
+            var btn = taskItem.child(taskItem.childCount() - 1);
+            if (/去浏览|立即领取/.test(btn.text())) {
+                var obj = {};
+                obj.Title = title;
+                obj.BtnName = btn.text();
+                obj.Button = btn;
+                if (btn.text() == "去浏览") {
+                    oneWalkTaskList.push(obj);
+                } else if (btn.text() == "立即领取") {
+                    doneTaskList.push(obj);
+                }
+                log("未完成任务" + (oneWalkTaskList.length + doneTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + obj.Button.bounds().height());
+            } else {
+                log("跳过任务: " + title + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + btn.bounds().height());
+            }
+        });
+    
+        var uncompleteTaskNum = oneWalkTaskList.length + doneTaskList.length;
+        log("未完成任务数: " + uncompleteTaskNum);
+        if (uncompleteTaskNum == 0) {
+            break;
+        }
+    
+        for (var i = 0; i < oneWalkTaskList.length; i++) {
+            var objs = [];
+            objs.push(oneWalkTaskList[i]);
+            if (commonAction.doOneWalkTasks(objs)) {
+                sleep(2000);
+                var clickRet = click(oneWalkTaskList[i].Button.bounds().centerX(), oneWalkTaskList[i].Button.bounds().centerY());
+                log("点击 立即领取: " + clickRet);
+                sleep(2000);
+            }
+        }
+
+        for (var i = 0; i < doneTaskList.length; i++) {
+            var clickRet = click(doneTaskList[i].Button.bounds().centerX(), doneTaskList[i].Button.bounds().centerY());
+            log("点击 " + doneTaskList[i].BtnName + ": " + clickRet);
+            sleep(2000);
+        }
+
+        if (new Date().getTime() - startTick > 2 * 60 * 1000) {
+            break;
+        }
+    }
+
+    log("下划到顶抽奖: " + swipe(device.width / 2, Math.floor(device.height / 8), device.width / 2, Math.floor(device.height / 8) + totalTasks.length * swipeHeight, 800));
+    var chanceNumTips = textMatches(/还剩\d+次机会/).findOne(1000);
+    if (chanceNumTips == null) {
+        back();
+        sleep(3000);
+        return;
+    }
+
+    toastLog(chanceNumTips.text());
+    var changeNum = chanceNumTips.text().match(/\d+/);
+    for (var i = 0; i < parseInt(changeNum[0]); i++) {
+        var clickRet = click(chanceNumTips.parent().bounds().centerX(), chanceNumTips.parent().bounds().centerY());
+        log("点击 抽奖: " + clickRet + ", 并等待 继续抽奖 出现, 15s超时");
+
+        var bingoTips = waitForText("text", "继续抽奖", true, 15);
+        if (bingoTips == null) {
+            break;
+        }
+        var dlgFrame = bingoTips.parent().parent();
+        var closeBtn = dlgFrame.child(dlgFrame.childCount() - 1);
+        log("点击 关闭按钮: " + closeBtn.click());
+        sleep(1000);
+    }
+
+    common.safeSet(nowDate + ":" + everydayRedEnvelopesSignInTag, "done");
+    toastLog("完成 " + everydayRedEnvelopesSignInTag);
+    back();
+    sleep(3000);
+}
+
 isAllSignInComplete = function () {
     var nowDate = new Date().Format("yyyy-MM-dd");
     for (var i = 0; i < dailySignIn.signInTags.length; i++) {
@@ -659,9 +797,15 @@ dailySignIn.doDailySignIn = function () {
     dailySignIn.signInTags.push(personalCareSignInTag);
     doPersonalCareSignIn();
 
+    dailySignIn.signInTags.push(favarite618TogetherSignInTag);
+    doFavarite618TogetherSignIn();
+
+    dailySignIn.signInTags.push(everydayRedEnvelopesSignInTag);
+    doEverydayRedEnvelopesSignIn();
+
     if (isAllSignInComplete()) {
         common.safeSet(nowDate + ":" + dailySignInTag, "done");
-        log("完成 " + dailySignInTag);
+        toastLog("完成 " + dailySignInTag);
     }
 
     commonAction.backToAppMainPage();
