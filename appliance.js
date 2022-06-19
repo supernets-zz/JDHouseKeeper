@@ -8,6 +8,16 @@ const signInTag = "京东电器每日签到";
 appliance.dailyJobs = [];
 appliance.dailyJobs.push(signInTag);
 
+appliance.isSignInDone = function () {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + signInTag);
+    if (done != null) {
+        return true;
+    }
+
+    return false;
+}
+
 appliance.doSignIn = function () {
     log("appliance.doSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");

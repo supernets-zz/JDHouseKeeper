@@ -8,6 +8,16 @@ const signInTag = "京东会员每日领京豆";
 plusMember.dailyJobs = [];
 plusMember.dailyJobs.push(signInTag);
 
+plusMember.isSignInDone = function () {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + signInTag);
+    if (done != null) {
+        return true;
+    }
+
+    return false;
+}
+
 plusMember.doSignIn = function () {
     log("plusMember.doSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");

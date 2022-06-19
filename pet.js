@@ -378,7 +378,7 @@ doHelpToFeed = function () {
         }
 
         var actionBar = levelTips.parent().parent().parent();
-        var helpToFeedBtn = actionBar.child(actionBar.childCount() - 3).child(0);
+        var helpToFeedBtn = actionBar.child(actionBar.childCount() - 2).child(0);
         var clickRet = click(helpToFeedBtn.bounds().centerX(), helpToFeedBtn.bounds().centerY());
         log("点击 帮忙喂养(" + helpToFeedBtn.bounds().centerX() + ", " + helpToFeedBtn.bounds().centerY() + "): " + clickRet + ", 并等待 三餐时间拜访好友小家 出现, 15s超时");
         sleep(2000);
@@ -475,6 +475,7 @@ pet.doRoutine = function () {
     var nextFeedDogFoodCheckTS = parseInt(common.safeGet(common.nextFeedDogFoodTimestampTag));
     log(common.nextFeedDogFoodTimestampTag + ": " + common.timestampToTime(nextFeedDogFoodCheckTS));
     if (!isNaN(nextFeedDogFoodCheckTS) && new Date().getTime() > nextFeedDogFoodCheckTS) {
+        sleep(5000);
         checkDogBowl();
 
         doGetDogFoodTasks(actionBar);

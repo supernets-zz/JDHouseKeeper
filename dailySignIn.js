@@ -816,6 +816,16 @@ isAllSignInComplete = function () {
     return true;
 }
 
+dailySignIn.isSignInDone = function () {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + dailySignInTag);
+    if (done != null) {
+        return true;
+    }
+
+    return false;
+}
+
 dailySignIn.doDailySignIn = function () {
     log("dailySignIn.doDailySignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");

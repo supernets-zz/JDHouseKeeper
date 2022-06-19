@@ -501,6 +501,16 @@ bean.calcBeanIncome = function () {
     commonAction.backToAppMainPage();
 }
 
+bean.isSignInDone = function () {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + signInTag);
+    if (done != null) {
+        return true;
+    }
+
+    return false;
+}
+
 bean.doSignIn = function () {
     log("bean.doSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");

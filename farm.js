@@ -102,6 +102,16 @@ doWateringTasks = function (tasklist, duckBtn) {
     }
 }
 
+farm.isSignInDone = function () {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + signInTag);
+    if (done != null) {
+        return true;
+    }
+
+    return false;
+}
+
 farm.doSignIn = function () {
     log("farm.doSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");

@@ -8,6 +8,16 @@ const signInTag = "券后9.9每日签到";
 coupon99.dailyJobs = [];
 coupon99.dailyJobs.push(signInTag);
 
+coupon99.isSignInDone = function () {
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + signInTag);
+    if (done != null) {
+        return true;
+    }
+
+    return false;
+}
+
 coupon99.doSignIn = function () {
     log("coupon99.doSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");

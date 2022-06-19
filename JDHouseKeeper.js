@@ -1,5 +1,6 @@
 "ui";
-const execInterval = 15 * 60; //检查间隔时间，单位：秒，周期任务每15分钟整点做一次
+const execInterval = 30 * 60; //检查间隔时间，单位：秒，周期任务每30分钟整点做一次
+const signInExecInterval = 60;//签到没做完检查间隔时间，单位：秒
 
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
@@ -204,14 +205,14 @@ function mainWorker() {
             // 我的
             bean.calcBeanIncome();
 
-            // 签到领京豆
-            bean.doSignIn();
-
             // 我的-> 会员店-> 天天领京豆-> 立即翻牌，每日一次
             plusMember.doSignIn();
 
-            // 各个场馆每日签到
-            dailySignIn.doDailySignIn();
+            // 签到领京豆
+            bean.doSignIn();
+
+            // 免费水果-> 连续签到，每日一次
+            farm.doSignIn();
 
             // 券后9.9-> 领券-> 立即签到，每日一次
             coupon99.doSignIn();
@@ -219,28 +220,37 @@ function mainWorker() {
             // 京东电器-> 左上角签到-> 立即翻牌，每日一次
             appliance.doSignIn();
 
-            // 免费水果-> 领水滴，定时领水
-            farm.doPeriodGetDrops();
+            // 各个场馆每日签到
+            dailySignIn.doDailySignIn();
 
-            // 免费水果-> 连续签到，每日一次
-            farm.doSignIn();
+            if (plusMember.isSignInDone() && 
+                bean.isSignInDone() && 
+                farm.isSignInDone() && 
+                coupon99.isSignInDone() && 
+                appliance.isSignInDone() && 
+                dailySignIn.isSignInDone()) {
+                // 免费水果-> 领水滴，定时领水
+                farm.doPeriodGetDrops();
 
-            // 免费水果-> 连续签到，每日一次
-            farm.doSubscribeGetDrops();
+                // 免费水果-> 连续签到，每日一次
+                farm.doSubscribeGetDrops();
 
-            // 免费水果-> 领水滴，每日一次
-            farm.doGetDrops();
+                // 免费水果-> 领水滴，每日一次
+                farm.doGetDrops();
 
-            // 领京豆-> 升级赚京豆
-            bean.doUpgradeBeans();
+                // 领京豆-> 升级赚京豆
+                bean.doUpgradeBeans();
 
-            // 领京豆-> 种豆得豆，周期去做
-            bean.doRoutine();
+                // 领京豆-> 种豆得豆，周期去做
+                bean.doRoutine();
 
-            // 我的-> 宠汪汪-> 领狗粮，每日一次
-            pet.doRoutine();
+                // 我的-> 宠汪汪-> 领狗粮，每日一次
+                pet.doRoutine();
 
-            ret = true;
+                ret = true;
+            } else {
+                ret = false;
+            }
         }
 	} catch(e) {
 		console.error("mainWorker",e);
