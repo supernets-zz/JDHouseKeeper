@@ -54,6 +54,38 @@ doSignIn = function (tag, url) {
     sleep(3000);
 }
 
+//类似天天领京豆的翻牌签到
+doFlipCardSignIn = function (tag, url) {
+    log("dailySignIn.doFlipCardSignIn: " + tag + ", " + url);
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"' + url + '","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    var myJDBeanTips = common.waitForText("textContains", "我的京豆", true, 30);
+    if (myJDBeanTips == null) {
+        return;
+    }
+
+    var signFrame = myJDBeanTips.parent();
+    var signBtn = signFrame.child(signFrame.childCount() - 2);
+
+    if (signBtn.text() == "今日已签到") {
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        common.safeSet(nowDate + ":" + tag, "done");
+        toastLog("完成 " + tag);
+    } else if (signBtn.text() == "立即翻牌") {
+        var clickRet = signBtn.click();
+        log("点击 立即翻牌: " + clickRet + ", 并等待 今日已签到 出现, 10s超时");
+        sleep(5000);
+    } else {
+        log("unknown status");
+    }
+
+    back();
+    sleep(3000);
+}
+
 doMotherAndBabySignIn = function () {
     log("dailySignIn.doMotherAndBabySignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");
@@ -88,7 +120,7 @@ doMotherAndBabySignIn = function () {
         var tips = text("赚京豆抵现金").visibleToUser(true).findOne(1000);
         if (tips == null) {
             log("上划屏幕直到 赚京豆抵现金 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 4 / 7), 300));
-            sleep(1000);
+            sleep(5000);
         } else {
             break;
         }
@@ -563,43 +595,35 @@ doFavarite618TogetherSignIn = function () {
     toast("dailySignIn.doFavarite618TogetherSignIn");
     app.startActivity({
         action: "VIEW",
-        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/cCiyAup","M_sourceFrom":"mxz","msf_type":"auto"}'
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://prodev.m.jd.com/mall/active/2AHoH4doy5uFX6ukQAo7CkZT9Fyu/index.html?babelChannel=ttt7&rid=12275&ad_od=share&hideyl=1&cu=true&PTAG=17053.1.1&utm_source=m.sxqq.com&utm_medium=jingfen&utm_campaign=t_13297_&utm_term=4c729b433a8a4327abd5922d3b96ba8c","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var ruleTips = common.waitForText("text", "618和你一起种草", false, 15);
-    if (ruleTips == null) {
+    var signTips = common.waitForText("textContains", "看内容签到", true, 30);
+    if (signTips == null) {
         back();
         sleep(3000);
+        return;
     }
 
-    var startTick = new Date().getTime();
-    for (;;) {
-        ruleTips = text("活动规则").visibleToUser(true).findOne(1000);
-        if (ruleTips == null) {
-            log("上划屏幕直到 活动规则 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 4 / 7), 300));
-            sleep(1000);
-        } else {
-            break;
-        }
-
-        log("pass " + parseInt((new Date().getTime() - startTick) / 1000) + "s");
-        if (new Date().getTime() - startTick > 30 * 1000) {
-            log("timeout");
-            break;
-        }
-    }
-
-    var signFrame = ruleTips.parent();
-    var signBtn = signFrame.child(signFrame.childCount() - 1).child(1);
+    var signFrame = signTips.parent();
+    var signBtn = signFrame.child(signFrame.childCount() - 1);
     log(signBtn.text());
-    if (signBtn.text() != "今日已签") {
+    if (signBtn.text() == "今日已签到") {
+        common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
+        toastLog("完成 " + favarite618TogetherSignInTag);
+    } else {
         log("点击 " + signBtn.text() + ": " + signBtn.click());
         sleep(1000);
     }
 
-    common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
-    toastLog("完成 " + favarite618TogetherSignInTag);
-
+    var lookBtn = text("去看看").findOne(1000);
+    if (lookBtn != null) {
+        var clickRet = click(lookBtn.bounds().centerX(), lookBtn.bounds().centerY());
+        log("点击 去看看: " + clickRet);
+        sleep(5000);
+        back();
+        sleep(3000);
+    }
     back();
     sleep(3000);
 }
@@ -707,7 +731,7 @@ doEverydayRedEnvelopesSignIn = function () {
         var clickRet = click(chanceNumTips.parent().bounds().centerX(), chanceNumTips.parent().bounds().centerY());
         log("点击 抽奖: " + clickRet + ", 并等待 继续抽奖 出现, 15s超时");
 
-        var bingoTips = waitForText("text", "继续抽奖", true, 15);
+        var bingoTips = common.waitForText("text", "继续抽奖", true, 15);
         if (bingoTips == null) {
             break;
         }
@@ -836,6 +860,24 @@ dailySignIn.doDailySignIn = function () {
     }
 
     toast("dailySignIn.doDailySignIn");
+    var flipCardSignInList = {
+        "京东会员每日领京豆": "https://u.jd.com/cIiBwep",
+        "京东电器每日签到": "https://3.cn/-1wVVmrm?_ts=1655742390752&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI",
+    }
+
+    dailySignIn.signInTags = [];
+    Object.keys(flipCardSignInList).forEach((tag) => {
+        dailySignIn.signInTags.push(tag);
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        var done = common.safeGet(nowDate + ":" + tag);
+        if (done != null) {
+            log(tag + " 已做: " + done);
+            return;
+        }
+
+        doFlipCardSignIn(tag, flipCardSignInList[tag]);
+    });
+
     //来源见 http://www.sxqq.com/dazhe/5542.html
     var signInList = {
         "京东图书每日签到": "https://u.jd.com/Nt9YkO7",
