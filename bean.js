@@ -92,25 +92,21 @@ doPickupMerchantTasks = function (tasklist) {
         var clicky = validMerchant[0].bounds().centerY() + validMerchant[0].bounds().height() * 2;
         for (var ll = 0; ll < 6; ll++) {
             toastLog("点击左侧商品: " + click(clickx, clicky));
-            sleep(1000);
-            for (var l = 0; l < 10; l++) {
-                var btnLike = text("收藏").visibleToUser(true).findOne(1000);
-                if (btnLike == null) {
-                    log("上划屏幕找 收藏: " + swipe(device.width / 2, device.height / 2, device.width / 2, device.height / 3, 500));
-                    sleep(1000);
-                    continue;
-                }
-                log("取消收藏: " + click(btnLike.bounds().centerX(), btnLike.bounds().centerY()));
+            sleep(3000);
+            var noProduct = text("所选地区无货").findOne(1000);
+            if (noProduct != null) {
                 back();
-                sleep(3000);
-                break;
+                sleep(1000);
             }
+            log("上划屏幕找 收藏: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height / 8), 500));
+            sleep(1000);
+            var btnLike = text("收藏").visibleToUser(true).findOne(1000);
+            if (btnLike != null) {
+                log("取消收藏: " + click(btnLike.bounds().centerX(), btnLike.bounds().centerY()));
+            }
+            back();
+            sleep(3000);
 
-            //可能上的不是一般商品了
-            if (l == 10) {
-                throw "doPickupMerchantTasks: 非正常商品"
-            }
-            common.waitDismiss("text", "收藏", 10);
             //从右向左滑动
             swipe(device.width * 3 / 4, device.height / 2, device.width / 4, device.height / 2, 500);
             sleep(1000);

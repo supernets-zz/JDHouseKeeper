@@ -18,7 +18,7 @@ judgeAppMainPage = function () {
         return false;
     }
 
-    var tabNames = ["京东电器", "领京豆", "京东到家", "PLUS会员"];
+    var tabNames = ["京东电器", "领京豆", "PLUS会员"];
     for (var i = 0; i < tabNames.length; i++) {
         var entry = root.findOne(className("TextView").text(tabNames[i]));
         if (entry == null) {

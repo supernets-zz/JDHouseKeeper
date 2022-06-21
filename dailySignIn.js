@@ -886,7 +886,6 @@ dailySignIn.doDailySignIn = function () {
         "京东服饰每日签到": "https://u.jd.com/NK9Zbez",
     }
 
-    dailySignIn.signInTags = [];
     Object.keys(signInList).forEach((tag) => {
         dailySignIn.signInTags.push(tag);
         var nowDate = new Date().Format("yyyy-MM-dd");

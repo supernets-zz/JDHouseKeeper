@@ -41,12 +41,8 @@ gotoFarm = function () {
             log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
             sleep(1000);
         } else {
-            break;
+            sleep(1000);
         }
-    }
-
-    if (i >= 10) {
-        return null;
     }
 
     //弹出继续去逛农场提示
@@ -259,7 +255,6 @@ farm.doGetDrops = function () {
     }
 
     toast("farm.doGetDrops");
-    // 免费水果-> 左上角签到-> 立即翻牌，每日一次
     var actionBar = gotoFarm();
     if (actionBar == null) {
         commonAction.backToAppMainPage();
