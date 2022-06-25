@@ -23,10 +23,11 @@ gotoFarm = function () {
     }
 
     var clickRet = farmBtn.parent().click();
-    log("点击 免费水果: " + clickRet + ", 并等待 包邮送到家 出现, 15s超时");
     if (!clickRet) {
+        toastLog("点击 免费水果: " + clickRet);
         return null;
     }
+    log("点击 免费水果: " + clickRet + ", 并等待 包邮送到家 出现, 15s超时");
 
     var freeShipTips = common.waitForTextMatches(/.*包邮送到家/, true, 15);
     if (freeShipTips == null) {
@@ -127,8 +128,13 @@ farm.doSignIn = function () {
 
     var continuousSignInBtn = actionBar.child(actionBar.childCount() - 2).child(0);
     clickRet = click(continuousSignInBtn.bounds().centerX(), continuousSignInBtn.bounds().centerY());
-    log("点击 连续签到(" + continuousSignInBtn.bounds().centerX() + ", " + continuousSignInBtn.bounds().centerY() + "): " + clickRet + ", 并等待 连续7天签到可得大额京豆或水滴礼包 出现, 15s超时");
+    if (!clickRet) {
+        toastLog("点击 连续签到(" + continuousSignInBtn.bounds().centerX() + ", " + continuousSignInBtn.bounds().centerY() + "): " + clickRet);
+        commonAction.backToAppMainPage();
+        return;
+    }
 
+    log("点击 连续签到(" + continuousSignInBtn.bounds().centerX() + ", " + continuousSignInBtn.bounds().centerY() + "): " + clickRet + ", 并等待 连续7天签到可得大额京豆或水滴礼包 出现, 15s超时");
     var signTips = common.waitForTextMatches(/.*连续7天签到可得大额京豆或水滴礼包/, true, 15);
     if (signTips == null) {
         commonAction.backToAppMainPage();
@@ -189,8 +195,13 @@ farm.doSubscribeGetDrops = function () {
 
     var continuousSignInBtn = actionBar.child(actionBar.childCount() - 2).child(0);
     clickRet = click(continuousSignInBtn.bounds().centerX(), continuousSignInBtn.bounds().centerY());
-    log("点击 连续签到(" + continuousSignInBtn.bounds().centerX() + ", " + continuousSignInBtn.bounds().centerY() + "): " + clickRet + ", 并等待 连续7天签到可得大额京豆或水滴礼包 出现, 15s超时");
+    if (!clickRet) {
+        toastLog("点击 连续签到(" + continuousSignInBtn.bounds().centerX() + ", " + continuousSignInBtn.bounds().centerY() + "): " + clickRet);
+        commonAction.backToAppMainPage();
+        return;
+    }
 
+    log("点击 连续签到(" + continuousSignInBtn.bounds().centerX() + ", " + continuousSignInBtn.bounds().centerY() + "): " + clickRet + ", 并等待 连续7天签到可得大额京豆或水滴礼包 出现, 15s超时");
     for (;;) {
         var subscribeTips = common.waitForText("text", "浏览并关注频道", true, 15);
         if (subscribeTips == null) {
@@ -267,6 +278,11 @@ farm.doGetDrops = function () {
     // 除了双签领豆任务以外其他都做完了就算完成
     for (;;) {
         var clickRet = click(getDropsBtn.bounds().centerX(), getDropsBtn.bounds().centerY());
+        if (!clickRet) {
+            toastLog("点击 领水滴(" + getDropsBtn.bounds().centerX() + ", " + getDropsBtn.bounds().centerY() + "): " + clickRet);
+            break;
+        }
+
         log("点击 领水滴(" + getDropsBtn.bounds().centerX() + ", " + getDropsBtn.bounds().centerY() + "): " + clickRet + ", 并等待 领水滴 出现, 5s超时");
         sleep(2000);
         var taskListTips = common.waitForTextMatches(/领水滴/, true, 5);
@@ -442,6 +458,11 @@ farm.doPeriodGetDrops = function () {
     var getDropsBtn = actionBar.child(actionBar.childCount() - 2).child(1);
     for (;;) {
         var clickRet = click(getDropsBtn.bounds().centerX(), getDropsBtn.bounds().centerY());
+        if (!clickRet) {
+            toastLog("点击 领水滴(" + getDropsBtn.bounds().centerX() + ", " + getDropsBtn.bounds().centerY() + "): " + clickRet);
+            break;
+        }
+
         log("点击 领水滴(" + getDropsBtn.bounds().centerX() + ", " + getDropsBtn.bounds().centerY() + "): " + clickRet + ", 并等待 领水滴 出现, 5s超时");
         sleep(2000);
         var taskListTips = common.waitForTextMatches(/领水滴/, true, 5);

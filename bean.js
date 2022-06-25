@@ -8,12 +8,10 @@ const signInTag = "签到领京豆";
 const plantBeanTag = "签到领京豆.种豆得豆";
 const lotteryTag = "签到领京豆.抽京豆";
 const shakeTag = "签到领京豆.摇京豆";
-const upgradeEarnBeanTag = "升级赚京豆每日任务";
 
 bean.dailyJobs = [];
 bean.dailyJobs.push(todayBeanTag);
 bean.dailyJobs.push(signInTag);
-bean.dailyJobs.push(upgradeEarnBeanTag);
 
 gotoBean = function () {
     var beanBtn = text("领京豆").packageName(common.destPackageName).findOne(30000);
@@ -23,11 +21,12 @@ gotoBean = function () {
     }
 
     var clickRet = beanBtn.parent().click();
-    log("点击 领京豆: " + clickRet + ", 并等待 规则 出现, 15s超时");
     if (!clickRet) {
+        toastLog("点击 领京豆: " + clickRet);
         return null;
     }
 
+    log("点击 领京豆: " + clickRet + ", 并等待 规则 出现, 15s超时");
     var ruleTips = common.waitForText("text", "规则", true, 15);
     if (ruleTips == null) {
         return null;
@@ -96,16 +95,20 @@ doPickupMerchantTasks = function (tasklist) {
             var noProduct = text("所选地区无货").findOne(1000);
             if (noProduct != null) {
                 back();
-                sleep(1000);
+                sleep(3000);
             }
-            log("上划屏幕找 收藏: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height / 8), 500));
-            sleep(1000);
-            var btnLike = text("收藏").visibleToUser(true).findOne(1000);
-            if (btnLike != null) {
-                log("取消收藏: " + click(btnLike.bounds().centerX(), btnLike.bounds().centerY()));
+            for (var j = 0; j < 2; j++) {
+                var btnLike = text("收藏").visibleToUser(true).findOne(1000);
+                if (btnLike != null) {
+                    log("取消收藏: " + click(btnLike.bounds().centerX(), btnLike.bounds().centerY()));
+                    sleep(3000);
+                } else {
+                    log("上划屏幕找 收藏: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height / 8), 500));
+                    sleep(3000);
+                }
             }
             back();
-            sleep(3000);
+            sleep(3000);                    
 
             //从右向左滑动
             swipe(device.width * 3 / 4, device.height / 2, device.width / 4, device.height / 2, 500);
@@ -120,14 +123,6 @@ doPickupMerchantTasks = function (tasklist) {
 bean.doUpgradeBeans = function () {
     log("bean.doUpgradeBeans");
     // 领京豆-> 升级赚京豆
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var done = common.safeGet(nowDate + ":" + upgradeEarnBeanTag);
-    if (done != null) {
-        log(upgradeEarnBeanTag + " 已做: " + done);
-        return;
-    }
-
-    toast("bean.doUpgradeBeans");
     var actionBar = gotoBean();
     if (actionBar == null) {
         commonAction.backToAppMainPage();
@@ -136,8 +131,13 @@ bean.doUpgradeBeans = function () {
 
     var upgradeEarnBean = actionBar.child(actionBar.childCount() - 2);
     var clickRet = click(upgradeEarnBean.bounds().centerX(), upgradeEarnBean.bounds().centerY());
-    log("点击 升级赚京豆: " + clickRet + ", 并等待 /做任务再升一级.*/ 出现, 15s超时");
+    if (!clickRet) {
+        toastLog("点击 升级赚京豆: " + clickRet);
+        commonAction.backToAppMainPage();
+        return;
+    }
 
+    log("点击 升级赚京豆: " + clickRet + ", 并等待 /做任务再升一级.*/ 出现, 15s超时");
     common.waitForTextMatches(/做任务再升一级.*/, true, 15);
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     // 除了双签领豆任务以外其他都做完了就算完成
@@ -195,8 +195,6 @@ bean.doUpgradeBeans = function () {
         var uncompleteTaskNum = oneWalkTaskList.length;
         log("未完成任务数: " + uncompleteTaskNum);
         if (uncompleteTaskNum == 0) {
-            common.safeSet(nowDate + ":" + upgradeEarnBeanTag, "done");
-            toastLog("完成 " + upgradeEarnBeanTag);
             break;
         }
 
@@ -218,8 +216,12 @@ doGetNutrientTasks = function (growthTips) {
     var moreTasksBtn = moreTaskFrame.child(moreTaskFrame.childCount() - 2);
 
     var clickRet = click(moreTasksBtn.bounds().centerX(), moreTasksBtn.bounds().centerY());
-    log("点击 更多任务: " + clickRet + ", 并等待 /已获得\d+\/\d+瓶 出现, 15s超时");
+    if (!clickRet) {
+        toastLog("点击 更多任务: " + clickRet);
+        return;
+    }
 
+    log("点击 更多任务: " + clickRet + ", 并等待 /已获得\d+\/\d+瓶 出现, 15s超时");
     common.waitForTextMatches(/已获得\d+\/\d+瓶/, true, 15);
 
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
@@ -435,8 +437,13 @@ bean.doRoutine = function () {
 
     var plantBeanBtn = actionBar.child(actionBar.childCount() - 1);
     var clickRet = click(plantBeanBtn.bounds().centerX(), plantBeanBtn.bounds().centerY());
-    log("点击 种豆得豆: " + clickRet + ", 并等待 豆苗成长值 出现, 15s超时");
+    if (!clickRet) {
+        toastLog("点击 种豆得豆: " + clickRet);
+        commonAction.backToAppMainPage();
+        return;
+    }
 
+    log("点击 种豆得豆: " + clickRet + ", 并等待 豆苗成长值 出现, 15s超时");
     var growthTips = common.waitForText("text", "豆苗成长值", true, 15);
     if (growthTips == null) {
         commonAction.backToAppMainPage();
@@ -471,12 +478,13 @@ bean.calcBeanIncome = function () {
     }
 
     var clickRet = mineTab.parent().child(2).click();
-    log("点击 我的: " + clickRet + ", 并等待 京豆 出现, 15s超时");
     if (!clickRet) {
+        toastLog("点击 我的: " + clickRet);
         commonAction.backToAppMainPage();
         return;
     }
 
+    log("点击 我的: " + clickRet + ", 并等待 京豆 出现, 15s超时");
     var myBeans = common.waitForText("text", "京豆", true, 15);
     if (myBeans == null) {
         commonAction.backToAppMainPage();

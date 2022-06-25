@@ -37,6 +37,11 @@ checkDogBowl = function () {
     if (dogBowl.childCount() == 2) {
         var feedBtn = actionBar.child(actionBar.childCount() - 1);
         var clickRet = click(feedBtn.bounds().centerX(), feedBtn.bounds().centerY());
+        if (!clickRet) {
+            toastLog("点击 喂养: " + clickRet);
+            return;
+        }
+
         log("点击 喂养: " + clickRet + ", 并等待 喂养 出现，15s超时");
         sleep(2000);
         var doFeedBtn = common.waitForText("text", "喂养", true, 15);
@@ -139,9 +144,13 @@ doGetDogFoodTasks = function (actionBar) {
     for (;;) {
         var getDogFoodBtn = actionBar.child(actionBar.childCount() - 2).child(2);
         var clickRet = click(getDogFoodBtn.bounds().centerX(), getDogFoodBtn.bounds().centerY());
+        if (!clickRet) {
+            toastLog("点击 领狗粮(" + getDogFoodBtn.bounds().centerX() + ", " + getDogFoodBtn.bounds().centerY() + "): " + clickRet);
+            return;
+        }
+
         toastLog("点击 领狗粮(" + getDogFoodBtn.bounds().centerX() + ", " + getDogFoodBtn.bounds().centerY() + "): " + clickRet + ", 并等待 做任务得狗粮 出现, 15s超时");
         sleep(2000);
-
         var foodTaskTips = common.waitForText("textContains", "做任务得狗粮", true, 15);
         if (foodTaskTips == null) {
             return;
@@ -263,6 +272,13 @@ doAward618 = function (actionBar) {
 
     var get618AwardBtn = actionBar.child(actionBar.childCount() - 2);
     var clickRet = click(get618AwardBtn.bounds().centerX(), get618AwardBtn.bounds().centerY());
+    if (!clickRet) {
+        toastLog("点击 逛商品得积分: " + clickRet);
+        gotoPet();
+        sleep(5000);
+        return;
+    }
+
     toastLog("点击 逛商品得积分: " + clickRet + ", 并等待 /已浏览\d+\/\d+/ 出现, 15s超时")
 
     var progressTips = common.waitForTextMatches(/已浏览\d+\/\d+/, true, 15);
@@ -380,6 +396,11 @@ doHelpToFeed = function () {
         var actionBar = levelTips.parent().parent().parent();
         var helpToFeedBtn = actionBar.child(actionBar.childCount() - 2).child(0);
         var clickRet = click(helpToFeedBtn.bounds().centerX(), helpToFeedBtn.bounds().centerY());
+        if (!clickRet) {
+            toastLog("点击 帮忙喂养(" + helpToFeedBtn.bounds().centerX() + ", " + helpToFeedBtn.bounds().centerY() + "): " + clickRet);
+            return;
+        }
+
         log("点击 帮忙喂养(" + helpToFeedBtn.bounds().centerX() + ", " + helpToFeedBtn.bounds().centerY() + "): " + clickRet + ", 并等待 三餐时间拜访好友小家 出现, 15s超时");
         sleep(2000);
 
