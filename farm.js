@@ -41,6 +41,7 @@ gotoFarm = function () {
             var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
             log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
             sleep(1000);
+            break;
         } else {
             sleep(1000);
         }
@@ -69,6 +70,8 @@ gotoFarm = function () {
         if (j >= 10) {
             return null;
         }
+    } else {
+        toastLog("no 继续去逛农场");
     }
     //连续签到freeShipTips.parent().parent().child(倒数第二个).child(第一个);
     //领水滴freeShipTips.parent().parent().child(倒数第二个).child(第二个);
@@ -475,7 +478,7 @@ farm.doPeriodGetDrops = function () {
         log("可领取: " + dones.length);
         if (dones.length != 0) {
             log("领取水滴: " + click(dones[0].bounds().centerX(), dones[0].bounds().centerY()));
-            sleep(1000);
+            sleep(3000);
 
             if (inTheMorning) {
                 common.safeSet(nowDate + ":" + morningGetDropsTag, "done");
@@ -493,13 +496,13 @@ farm.doPeriodGetDrops = function () {
             if (tips != null) {
                 var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
                 log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
-                sleep(1000);
+                sleep(2000);
             }
 
             // 领取后任务列表有变不能点击旧的坐标
             // 任务列表关闭按钮坐标
             log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-            sleep(1000);
+            sleep(2000);
             continue;
         } else {
             break;

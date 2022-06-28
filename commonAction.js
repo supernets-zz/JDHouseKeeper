@@ -54,7 +54,7 @@ commonAction.backToAppMainPage = function () {
             sleep(1000);
             var btn = text(common.destAppName).findOne(3000);
             if (btn != null) {
-                log("switch to " + common.destAppName + ": " + click(btn.bounds().centerX(), btn.bounds().centerY()));
+                log("switch to " + common.destAppName + ": " + btn.parent().parent().click());
                 sleep(1000);
             } else {
                 log("no " + common.destAppName + " process");
@@ -89,8 +89,11 @@ commonAction.doOneWalkTasks = function (tasklist) {
         toastLog("点击[" + (i+1) + "/" + tasklist.length + "] " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
         sleep(1000);
         // 等待离开任务列表页面
+        if (!tasklist[i].Timeout) {
+            tasklist[i].Timeout = 10;
+        }
         log("等待 " + tasklist[i].Title + " 浏览完成");
-        for (var j = 0; j < 10; j++) {
+        for (var j = 0; j < tasklist[i].Timeout; j++) {
             var curPkg = currentPackage();
             if (curPkg != common.destPackageName) {
                 //跳其他app了要跳回来

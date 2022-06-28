@@ -4,6 +4,13 @@ var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
 const dailySignInTag = "京东各场馆每日签到";
+const plusMemberSignInTag = "京东会员每日领京豆";
+const applianceSignInTag = "京东电器每日签到";
+const bookStoreSignInTag = "京东图书每日签到";
+const accompanyPlanSignInTag = "陪伴计划每日签到";
+const dressStoreSignInTag = "女装馆每日签到";
+const clothStoreSignInTag = "京东服饰每日签到";
+const jdInternationalSignInTag = "京东国际每日签到";
 const motherAndBabySignInTag = "母婴馆每日签到";
 const wineStoreSignInTag = "京东酒行每日签到";
 const jdGoldenRankSignInTag = "京东金榜每日签到";
@@ -31,7 +38,7 @@ doSignIn = function (tag, url) {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"' + url + '","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var signTips = common.waitForText("textContains", "签到赢好礼", true, 15);
+    var signTips = common.waitForTextMatches(/.*签到赢好礼.*|.*签到拿京豆.*/, true, 15);
     if (signTips == null) {
         return;
     }
@@ -807,6 +814,7 @@ doCollectCubeSignIn = function () {
             obj.Title = btn1.child(btn1.childCount() - 1).text();
             obj.BtnName = obj.Title;
             obj.Button = btn1;
+            obj.Timeout = 15;
             objs.push(obj);
             commonAction.doOneWalkTasks(objs);
             sleep(2000);
@@ -860,10 +868,9 @@ dailySignIn.doDailySignIn = function () {
     }
 
     toast("dailySignIn.doDailySignIn");
-    var flipCardSignInList = {
-        "京东会员每日领京豆": "https://u.jd.com/cIiBwep",
-        "京东电器每日签到": "https://3.cn/-1wVVmrm?_ts=1655742390752&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI",
-    }
+    var flipCardSignInList = {};
+    flipCardSignInList[plusMemberSignInTag] = "https://u.jd.com/cIiBwep";
+    flipCardSignInList[applianceSignInTag] = "https://3.cn/-1wVVmrm?_ts=1655742390752&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
 
     dailySignIn.signInTags = [];
     Object.keys(flipCardSignInList).forEach((tag) => {
@@ -879,12 +886,12 @@ dailySignIn.doDailySignIn = function () {
     });
 
     //来源见 http://www.sxqq.com/dazhe/5542.html
-    var signInList = {
-        "京东图书每日签到": "https://u.jd.com/Nt9YkO7",
-        "陪伴计划每日签到": "https://u.jd.com/NI9poJ8",
-        "女装馆每日签到": "https://u.jd.com/NC92NR4",
-        "京东服饰每日签到": "https://u.jd.com/NK9Zbez",
-    }
+    var signInList = {};
+    signInList[bookStoreSignInTag] = "https://u.jd.com/Nt9YkO7";
+    signInList[accompanyPlanSignInTag] = "https://u.jd.com/NI9poJ8";
+    signInList[dressStoreSignInTag] = "https://u.jd.com/NC92NR4";
+    signInList[clothStoreSignInTag] = "https://u.jd.com/NK9Zbez";
+    signInList[jdInternationalSignInTag] = "https://u.jd.com/ctABz2V";
 
     Object.keys(signInList).forEach((tag) => {
         dailySignIn.signInTags.push(tag);
