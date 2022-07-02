@@ -212,6 +212,8 @@ function mainWorker() {
             // 各个场馆每日签到
             dailySignIn.doDailySignIn();
 
+            dailySignIn.doEverydayRedEnvelopesSignIn();
+
             // if (bean.isSignInDone() && 
             //     farm.isSignInDone() && 
             //     coupon99.isSignInDone() && 

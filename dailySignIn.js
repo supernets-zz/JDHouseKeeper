@@ -649,7 +649,7 @@ doFavarite618TogetherSignIn = function () {
     sleep(3000);
 }
 
-doEverydayRedEnvelopesSignIn = function () {
+dailySignIn.doEverydayRedEnvelopesSignIn = function () {
     log("dailySignIn.doEverydayRedEnvelopesSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");
     var done = common.safeGet(nowDate + ":" + everydayRedEnvelopesSignInTag);
@@ -666,8 +666,7 @@ doEverydayRedEnvelopesSignIn = function () {
 
     var chanceNumTips = common.waitForTextMatches(/还剩\d+次机会/, true, 15);
     if (chanceNumTips == null) {
-        back();
-        sleep(3000);
+        commonAction.backToAppMainPage();
         return;
     }
 
@@ -675,6 +674,25 @@ doEverydayRedEnvelopesSignIn = function () {
     var swipeHeight = totalTasks[1].bounds().top - totalTasks[0].bounds().top;
     log("上划屏幕: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height * 7 / 8) - swipeHeight * totalTasks.length, 500));
     sleep(2000);
+
+    var periodBonusTitle = text("定时奖励").findOne(1000);
+    var periodBonusTaskItem = periodBonusTitle.parent();
+    var periodBonusBtn = periodBonusTaskItem.child(periodBonusTaskItem.childCount() - 1);
+    var changeNum = chanceNumTips.text().match(/\d+/);
+    toastLog("抽奖次数: " + changeNum[0] + ", 定时奖励 按钮: " + periodBonusBtn.text());
+
+    if (parseInt(changeNum[0]) == 0 && periodBonusBtn.text() == "已领取") {
+        common.safeSet(nowDate + ":" + everydayRedEnvelopesSignInTag, "done");
+        toastLog("完成 " + everydayRedEnvelopesSignInTag);
+        commonAction.backToAppMainPage();
+        return;
+    }
+
+    if (periodBonusBtn.text() == "立即领取") {
+        var clickRet = click(periodBonusBtn.bounds().centerX(), periodBonusBtn.bounds().centerY());
+        log("点击 " + periodBonusBtn.text() + ": " + clickRet);
+        sleep(2000);
+    }
 
     var startTick = new Date().getTime();
     for (;;) {
@@ -685,8 +703,7 @@ doEverydayRedEnvelopesSignIn = function () {
     
         if (totalTasks.length == 0) {
             captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
-            back();
-            sleep(3000);
+            commonAction.backToAppMainPage();
             return;
         }
     
@@ -741,8 +758,7 @@ doEverydayRedEnvelopesSignIn = function () {
     log("下划到顶抽奖: " + swipe(device.width / 2, Math.floor(device.height / 8), device.width / 2, Math.floor(device.height / 8) + totalTasks.length * swipeHeight, 800));
     var chanceNumTips = textMatches(/还剩\d+次机会/).findOne(1000);
     if (chanceNumTips == null) {
-        back();
-        sleep(3000);
+        commonAction.backToAppMainPage();
         return;
     }
 
@@ -762,10 +778,7 @@ doEverydayRedEnvelopesSignIn = function () {
         sleep(1000);
     }
 
-    common.safeSet(nowDate + ":" + everydayRedEnvelopesSignInTag, "done");
-    toastLog("完成 " + everydayRedEnvelopesSignInTag);
-    back();
-    sleep(3000);
+    commonAction.backToAppMainPage();
 }
 
 doCollectCubeSignIn = function () {
@@ -1003,8 +1016,8 @@ dailySignIn.doDailySignIn = function () {
     dailySignIn.signInTags.push(favarite618TogetherSignInTag);
     doFavarite618TogetherSignIn();
 
-    dailySignIn.signInTags.push(everydayRedEnvelopesSignInTag);
-    doEverydayRedEnvelopesSignIn();
+    // dailySignIn.signInTags.push(everydayRedEnvelopesSignInTag);
+    // doEverydayRedEnvelopesSignIn();
 
     dailySignIn.signInTags.push(collectCubeSignInTag);
     doCollectCubeSignIn();

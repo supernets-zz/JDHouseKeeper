@@ -13,7 +13,7 @@ const nightGetDropsTag = "东东农场晚上定时领水任务";
 farm.dailyJobs = [];
 farm.dailyJobs.push(signInTag);
 farm.dailyJobs.push(subscribeGetDropsTag);
-farm.dailyJobs.push(getDropsTag);
+// farm.dailyJobs.push(getDropsTag);
 
 gotoFarm = function () {
     var farmBtn = textMatches(/.*水果.*/).packageName(common.destPackageName).findOne(30000);
@@ -260,15 +260,7 @@ farm.doSubscribeGetDrops = function () {
 }
 
 farm.doGetDrops = function () {
-    log("farm.doGetDrops");
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var done = common.safeGet(nowDate + ":" + getDropsTag);
-    if (done != null) {
-        log(getDropsTag + " 已做: " + done);
-        return;
-    }
-
-    toast("farm.doGetDrops");
+    toastLog("farm.doGetDrops");
     var actionBar = gotoFarm();
     if (actionBar == null) {
         commonAction.backToAppMainPage();
@@ -332,6 +324,17 @@ farm.doGetDrops = function () {
             log("领取水滴: " + click(dones[0].bounds().centerX(), dones[0].bounds().centerY()));
             sleep(1000);
 
+            //弹出每日签到提示、三餐领水滴提示
+            var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).findOne(1000);
+            if (tips != null) {
+                var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
+                log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
+                sleep(1000);
+                break;
+            } else {
+                sleep(1000);
+            }
+
             // 领取后任务列表有变不能点击旧的坐标
             // 任务列表关闭按钮坐标
             log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
@@ -377,8 +380,6 @@ farm.doGetDrops = function () {
         var uncompleteTaskNum = oneWalkTaskList.length + wateringTaskList.length;
         log("未完成任务数: " + uncompleteTaskNum);
         if (uncompleteTaskNum == 0) {
-            common.safeSet(nowDate + ":" + getDropsTag, "done");
-            toastLog("完成 " + getDropsTag);
             break;
         }
 
