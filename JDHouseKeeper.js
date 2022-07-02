@@ -1,6 +1,5 @@
 "ui";
-const execInterval = 30 * 60; //检查间隔时间，单位：秒，周期任务每30分钟整点做一次
-const signInExecInterval = 60;//签到没做完检查间隔时间，单位：秒
+const execInterval = 60 * 60; //检查间隔时间，单位：秒，周期任务每30分钟整点做一次
 
 var common = require("./common.js");
 var commonAction = require("./commonAction.js");
@@ -213,10 +212,10 @@ function mainWorker() {
             // 各个场馆每日签到
             dailySignIn.doDailySignIn();
 
-            if (bean.isSignInDone() && 
-                farm.isSignInDone() && 
-                coupon99.isSignInDone() && 
-                dailySignIn.isSignInDone()) {
+            // if (bean.isSignInDone() && 
+            //     farm.isSignInDone() && 
+            //     coupon99.isSignInDone() && 
+            //     dailySignIn.isSignInDone()) {
                 // 免费水果-> 领水滴，定时领水
                 farm.doPeriodGetDrops();
 
@@ -236,9 +235,9 @@ function mainWorker() {
                 pet.doRoutine();
 
                 ret = true;
-            } else {
-                ret = false;
-            }
+            // } else {
+            //     ret = false;
+            // }
         }
 	} catch(e) {
 		console.error("mainWorker",e);

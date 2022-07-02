@@ -185,9 +185,8 @@ common.waitForTextMatches = function (regex, visible, sec) {
 }
 
 common.findImage = function (tmpl) {
-    var img = captureScreen();
     var templ = images.read(tmpl);
-    point = findImage(img, templ);
+    point = findImage(captureScreen(), templ);
     if (point != null) {
         point.x = point.x + Math.floor(templ.getWidth() / 2);
         point.y = point.y + Math.floor(templ.getHeight() / 2);
@@ -197,9 +196,8 @@ common.findImage = function (tmpl) {
 }
 
 common.findImageInRegion = function (tmpl, x, y, w, h) {
-    var img = captureScreen();
     var templ = images.read(tmpl);
-    point = findImageInRegion(img, templ, x, y, w, h);
+    point = findImageInRegion(captureScreen(), templ, x, y, w, h);
     if (point != null) {
         point.x = point.x + Math.floor(templ.getWidth() / 2);
         point.y = point.y + Math.floor(templ.getHeight() / 2);
@@ -210,8 +208,8 @@ common.findImageInRegion = function (tmpl, x, y, w, h) {
 
 common.waitForImage = function (tmpl, sec) {
     var point = null;
-    var startTick = new Date();
-    for (;(new Date().getTime() - startTick) / 1000 < sec && point == null;) {
+    var startTick = new Date().getTime();
+    for (;;) {
         point = common.findImage(tmpl);
         if (point) {
             log(tmpl + " 出现 (" + point.x + ", " + point.y + ")");
@@ -219,7 +217,32 @@ common.waitForImage = function (tmpl, sec) {
         } else {
             log("等待 " + tmpl + " 出现");
         }
-        sleep(5000);
+
+        sleep(1000);
+        if (new Date().getTime() - startTick > sec * 1000) {
+            break;
+        }
+    }
+    //log(tmpl + " 出现" + point);
+    return point;
+}
+
+common.waitForImageInRegion = function (tmpl, x, y, w, h, sec) {
+    var point = null;
+    var startTick = new Date().getTime();
+    for (;;) {
+        point = common.findImageInRegion(tmpl, x, y, w, h);
+        if (point) {
+            log(tmpl + " 出现 (" + point.x + ", " + point.y + ")");
+            break;
+        } else {
+            log("等待 " + tmpl + " 出现");
+        }
+
+        sleep(1000);
+        if (new Date().getTime() - startTick > sec * 1000) {
+            break;
+        }
     }
     //log(tmpl + " 出现" + point);
     return point;
@@ -254,54 +277,6 @@ common.filterTaskList = function (todoTasks, validTaskNames) {
         }
     }
     return ret;
-}
-
-common.grantWalkToEarnPermission = function () {
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var permitted = common.safeGet(nowDate + ":" + this.walkToEarnPermissionTag);
-    if (permitted != null) {
-        log(this.walkToEarnPermissionTag + " : " + permitted);
-        return;
-    }
-
-    common.safeSet(nowDate + ":" + this.walkToEarnPermissionTag, true);
-    log(this.walkToEarnPermissionTag + " : 允许进入");
-}
-
-common.canWatch = function () {
-    var now = new Date().getTime();
-    var walkTS = null;
-    var workTS = null;
-    var nowDate = new Date().Format("yyyy-MM-dd");
-    var permitted = common.safeGet(nowDate + ":" + this.walkToEarnPermissionTag);
-    if (permitted != null) {
-        var tmp = parseInt(common.safeGet(this.nextWalkCheckTimestampTag));
-        if (!isNaN(tmp)) {
-            walkTS = tmp;
-        }
-    }
-
-    var tmp = parseInt(common.safeGet(this.nextWorkCheckTimestampTag));
-    if (!isNaN(tmp)) {
-        workTS = tmp;
-    }
-
-    var midnight = common.checkAuditTime("00:00", "08:00");
-    log("permitted: " + permitted + ", [00:00~08:00]: " + midnight + ", walkTS: " + this.timestampToTime(walkTS) + ", workTS: " + this.timestampToTime(workTS));
-
-    if (midnight && permitted == null) {
-        return false;
-    }
-    //当前时间小于Min(领取能量饮料, 领取体力)的时间才允许做视频任务
-    if (walkTS == null && workTS == null) {
-        return false;
-    } else if (walkTS == null && workTS != null) {
-        return now < workTS;
-    } else if (walkTS != null && walkTS == null) {
-        return now < walkTS;
-    } else {
-        return now < Math.min(walkTS, workTS);
-    }
 }
 
 module.exports = common;

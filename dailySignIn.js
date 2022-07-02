@@ -24,6 +24,7 @@ const personalCareSignInTag = "个人护理每日签到";
 const favarite618TogetherSignInTag = "618和你一起种草每日签到"; //6月22日过期
 const everydayRedEnvelopesSignInTag = "天天红包每日签到";
 const collectCubeSignInTag = "集魔方赢大奖";
+const brandShoppingSignInTag = "品牌闪购每日签到";
 
 dailySignIn.dailyJobs = [];
 dailySignIn.dailyJobs.push(dailySignInTag);
@@ -38,8 +39,13 @@ doSignIn = function (tag, url) {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"' + url + '","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var signTips = common.waitForTextMatches(/.*签到赢好礼.*|.*签到拿京豆.*/, true, 15);
+    var signTips = common.waitForTextMatches(/.*签到赢好礼.*|.*签到拿京豆.*/, true, 30);
     if (signTips == null) {
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        common.safeSet(nowDate + ":" + tag, "invalid");
+        toastLog("无效 " + tag);
+        back();
+        sleep(3000);
         return;
     }
 
@@ -71,6 +77,11 @@ doFlipCardSignIn = function (tag, url) {
 
     var myJDBeanTips = common.waitForText("textContains", "我的京豆", true, 30);
     if (myJDBeanTips == null) {
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        common.safeSet(nowDate + ":" + tag, "invalid");
+        toastLog("无效 " + tag);
+        back();
+        sleep(3000);
         return;
     }
 
@@ -86,7 +97,10 @@ doFlipCardSignIn = function (tag, url) {
         log("点击 立即翻牌: " + clickRet + ", 并等待 今日已签到 出现, 10s超时");
         sleep(5000);
     } else {
-        log("unknown status");
+        log(signBtn.text());
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        common.safeSet(nowDate + ":" + tag, "invalid");
+        toastLog("无效 " + tag);
     }
 
     back();
@@ -349,7 +363,7 @@ doGoldenRankCampBonus = function() {
             }
         }
 
-        if (new Date().getTime() - startTick > 5 * 60 * 1000) {
+        if (new Date().getTime() - startTick > 60 * 1000) {
             break;
         }
     }
@@ -605,7 +619,8 @@ doFavarite618TogetherSignIn = function () {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://prodev.m.jd.com/mall/active/2AHoH4doy5uFX6ukQAo7CkZT9Fyu/index.html?babelChannel=ttt7&rid=12275&ad_od=share&hideyl=1&cu=true&PTAG=17053.1.1&utm_source=m.sxqq.com&utm_medium=jingfen&utm_campaign=t_13297_&utm_term=4c729b433a8a4327abd5922d3b96ba8c","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var signTips = common.waitForText("textContains", "看内容签到", true, 30);
+    // var signTips = common.waitForText("textContains", "看内容签到", true, 30);
+    var signTips = common.waitForText("textContains", "连签", true, 30);
     if (signTips == null) {
         back();
         sleep(3000);
@@ -614,23 +629,22 @@ doFavarite618TogetherSignIn = function () {
 
     var signFrame = signTips.parent();
     var signBtn = signFrame.child(signFrame.childCount() - 1);
-    log(signBtn.text());
-    if (signBtn.text() == "今日已签到") {
-        common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
-        toastLog("完成 " + favarite618TogetherSignInTag);
-    } else {
-        log("点击 " + signBtn.text() + ": " + signBtn.click());
-        sleep(1000);
-    }
+    log("点击 " + signBtn.text() + ": " + signBtn.click());
+    sleep(1000);
+    common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
+    toastLog("完成 " + favarite618TogetherSignInTag);
 
-    var lookBtn = text("去看看").findOne(1000);
-    if (lookBtn != null) {
-        var clickRet = click(lookBtn.bounds().centerX(), lookBtn.bounds().centerY());
-        log("点击 去看看: " + clickRet);
+    var walkTips = text("浏览好货抽京豆").findOne(1000);
+    if (walkTips != null) {
+        var walkFrame = walkTips.parent();
+        var walkBtn = walkFrame.child(walkFrame.childCount() - 1);
+        var clickRet = walkBtn.click();
+        log("点击 逛一逛: " + clickRet);
         sleep(5000);
         back();
         sleep(3000);
     }
+
     back();
     sleep(3000);
 }
@@ -769,6 +783,13 @@ doCollectCubeSignIn = function () {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/2K2aV0M","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
+    click(device.width / 2, device.height / 2);
+    sleep(2000);
+    click(device.width / 2, device.height / 2);
+    sleep(2000);
+    click(device.width / 2, device.height / 2);
+    sleep(2000);
+
     sleep(10000);
     var signBtn = text("立即签到").findOne(1000);
     if (signBtn != null) {
@@ -830,6 +851,50 @@ doCollectCubeSignIn = function () {
 
     common.safeSet(nowDate + ":" + collectCubeSignInTag, "done");
     toastLog("完成 " + collectCubeSignInTag);
+
+    back();
+    sleep(3000);
+}
+
+doBrandShoppingSignIn = function () {
+    log("dailySignIn.doBrandShoppingSignIn");
+    var nowDate = new Date().Format("yyyy-MM-dd");
+    var done = common.safeGet(nowDate + ":" + brandShoppingSignInTag);
+    if (done != null) {
+        log(brandShoppingSignInTag + " 已做: " + done);
+        return;
+    }
+
+    toast("dailySignIn.doBrandShoppingSignIn");
+    app.startActivity({
+        action: "VIEW",
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://wqs.jd.com/portal/wx/seckill_m/brand.shtml?&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI","M_sourceFrom":"mxz","msf_type":"auto"}'
+    });
+
+    var todaySelectedBtn = common.waitForText("text", "今日精选", true, 15);
+    if (todaySelectedBtn == null) {
+        back();
+        sleep(3000);
+        return;
+    }
+
+    var signFrameParent = todaySelectedBtn.parent().parent().parent().parent().parent();
+    var signFrame = signFrameParent.child(signFrameParent.childCount() - 2);
+    var signBtn = signFrame.child(signFrame.childCount() - 1);
+    if (signBtn.text() == "今日已签") {
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        common.safeSet(nowDate + ":" + brandShoppingSignInTag, "done");
+        toastLog("完成 " + brandShoppingSignInTag);
+    } else if (signBtn.text() == "立即签到") {
+        var clickRet = signBtn.click();
+        log("点击 立即签到: " + clickRet);
+        sleep(5000);
+    } else {
+        log(signBtn.text());
+        var nowDate = new Date().Format("yyyy-MM-dd");
+        common.safeSet(nowDate + ":" + brandShoppingSignInTag, "invalid");
+        toastLog("无效 " + brandShoppingSignInTag);
+    }
 
     back();
     sleep(3000);
@@ -943,6 +1008,9 @@ dailySignIn.doDailySignIn = function () {
 
     dailySignIn.signInTags.push(collectCubeSignInTag);
     doCollectCubeSignIn();
+
+    dailySignIn.signInTags.push(brandShoppingSignInTag);
+    doBrandShoppingSignIn();
 
     if (isAllSignInComplete()) {
         common.safeSet(nowDate + ":" + dailySignInTag, "done");

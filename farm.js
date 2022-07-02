@@ -276,7 +276,7 @@ farm.doGetDrops = function () {
     }
 
     var getDropsBtn = actionBar.child(actionBar.childCount() - 2).child(1);
-    var duckBtn = actionBar.child(4).child(0);
+    var duckBtn = actionBar.child(3).child(0);
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     // 除了双签领豆任务以外其他都做完了就算完成
     for (;;) {
@@ -395,9 +395,10 @@ farm.doGetDrops = function () {
             continue;
         }
 
+        log("上划屏幕 " + swipe(device.width / 2, device.height * 15 / 16, device.width / 2, device.height * 13 / 16, 300));
         // 任务列表关闭按钮坐标
-        log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-        sleep(1000);
+        // log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
+        // sleep(1000);
     }
 
     commonAction.backToAppMainPage();
