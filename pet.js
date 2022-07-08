@@ -81,7 +81,7 @@ checkDogBowl = function () {
         if (/\d+小时\d+分\d+秒/.test(leftTimeTips)) {
             var HHmmss = leftTimeTips.match(/\d+/g);
             if (HHmmss.length == 3) {
-                var newNextFeedDogFoodCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                var newNextFeedDogFoodCheckTimestamp = new Date().getTime() + (Number(HHmmss[0]) * 3600 + Number(HHmmss[1]) * 60 + Number(HHmmss[2])) * 1000;
                 common.safeSet(common.nextFeedDogFoodTimestampTag, newNextFeedDogFoodCheckTimestamp);
                 log(common.nextFeedDogFoodTimestampTag + " 设置为: " + common.timestampToTime(newNextFeedDogFoodCheckTimestamp) + ", " + newNextFeedDogFoodCheckTimestamp);
             } else {

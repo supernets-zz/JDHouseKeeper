@@ -172,7 +172,7 @@ function isAllDailyTaskComplete() {
     for (var i = 0; i < taskList.length; i++) {
         var done = common.safeGet(nowDate + ":" + taskList[i]);
         if (done == null) {
-            log("isAllDailyTaskComplete: " + nowDate + ":" + taskList[i] + " 未完成");
+            toastLog("isAllDailyTaskComplete: " + nowDate + ":" + taskList[i] + " 未完成");
             return false;
         }
     }

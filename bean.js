@@ -339,7 +339,7 @@ getMyNutrients = function () {
                 if (/剩\d+:\d+:\d+/.test(title)) {
                     var HHmmss = title.match(/\d+/g);
                     if (HHmmss.length == 3) {
-                        newNextGetNutrientCheckTimestamp = new Date().getTime() + (parseInt(HHmmss[0]) * 3600 + parseInt(HHmmss[1]) * 60 + parseInt(HHmmss[2])) * 1000;
+                        newNextGetNutrientCheckTimestamp = new Date().getTime() + (Number(HHmmss[0]) * 3600 + Number(HHmmss[1]) * 60 + Number(HHmmss[2])) * 1000;
                     } else {
                         log("HHmmss: " + HHmmss);
                     }
@@ -588,16 +588,16 @@ bean.doSignIn = function () {
         var shakeTask = text("摇京豆").visibleToUser(true).findOne(1000);
         var shakeBtn = shakeTask.parent().parent().parent().parent();
         clickRet = click(shakeBtn.bounds().centerX(), shakeBtn.bounds().centerY());
-        log("点击 摇京豆: " + clickRet + ", 并等待 /立即签到 领京豆|领取摇盒子次数/ 出现，15s超时");
+        log("点击 摇京豆: " + clickRet + ", 并等待 /立即签到 领京豆|领取摇盒子次数|点击有惊喜/ 出现，15s超时");
 
-        var shakeBoxBtn = common.waitForTextMatches(/立即签到 领京豆|领取摇盒子次数/, true, 15);
+        var shakeBoxBtn = common.waitForTextMatches(/立即签到 领京豆|领取摇盒子次数|点击有惊喜/, true, 15);
         if (shakeBoxBtn == null) {
             commonAction.backToAppMainPage();
             return;
         }
 
         clickRet = click(shakeBoxBtn.bounds().centerX(), shakeBoxBtn.bounds().centerY());
-        log("点击 /立即签到 领京豆|领取摇盒子次数/: " + clickRet + ", 并等待10s");
+        log("点击 /立即签到 领京豆|领取摇盒子次数|点击有惊喜/: " + clickRet + ", 并等待10s");
 
         sleep(10000);
         back();

@@ -49,6 +49,7 @@ doSignIn = function (tag, url) {
         return;
     }
 
+    sleep(3000);
     var signFrame = signTips.parent().child(signTips.parent().childCount() - 1);
     var signDays = signFrame.child(0);
     var signBtn = signFrame.child(1);
@@ -137,34 +138,46 @@ doMotherAndBabySignIn = function () {
     }
 
     var startTick = new Date().getTime();
+    var tips = null;
     for (;;) {
-        var tips = text("赚京豆抵现金").visibleToUser(true).findOne(1000);
+        tips = textContains("我的京豆").visibleToUser(true).findOne(1000);
         if (tips == null) {
-            log("上划屏幕直到 赚京豆抵现金 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 4 / 7), 300));
+            log("上划屏幕直到 我的京豆 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 2 / 7), 300));
             sleep(5000);
         } else {
             break;
         }
 
         log("pass " + parseInt((new Date().getTime() - startTick) / 1000) + "s");
-        if (new Date().getTime() - startTick > 30 * 1000) {
+        if (new Date().getTime() - startTick > 60 * 1000) {
             log("timeout");
             break;
         }
     }
 
-    var signFrame = tips.parent().parent();
-    if (signFrame.child(signFrame.childCount() - 2).childCount() == 0) {
-        var signBtn = signFrame.child(signFrame.childCount() - 2);
-        if (signBtn.text() == "今日已签到") {
-            common.safeSet(nowDate + ":" + motherAndBabySignInTag, "done");
-            toastLog("完成 " + motherAndBabySignInTag);
-        }
-    } else {
-        var signBtn = signFrame.child(signFrame.childCount() - 2).child(0);
-        clickRet = click(signBtn.bounds().centerX(), signBtn.bounds().centerY());
-        log("点击 立即翻牌: " + clickRet);
+    sleep(3000);
+    var signFrame = tips.parent();
+    var signCalendarListParent = null;
+    log("signFrame.childCount(): " + signFrame.childCount());
+    if (signFrame.childCount() == 4) {
+        signCalendarListParent = signFrame.child(signFrame.childCount() - 1);
+    } else if (signFrame.childCount() == 5) {
+        signCalendarListParent = signFrame.child(signFrame.childCount() - 2);
+    }
+    var signCalendarList = signCalendarListParent.child(signCalendarListParent.childCount() - 1);
+
+    log("签到日历子节点个数: " + signCalendarList.childCount());
+    if (signCalendarList.childCount() == 15) {
+        var fingerBtn = signCalendarList.child(signCalendarList.childCount() - 1);
+        //点击手指左上角1/4处正好处于需要签到当日的中心处
+        var clickX = fingerBtn.bounds().left + Math.floor(fingerBtn.bounds().width() / 4);
+        var clickY = fingerBtn.bounds().top + Math.floor(fingerBtn.bounds().height() / 4);
+        clickRet = click(clickX, clickY);
+        log("点击 (" + clickX + ", " + clickY + "): " + clickRet);
         sleep(5000);
+    } else {
+        common.safeSet(nowDate + ":" + motherAndBabySignInTag, "done");
+        toastLog("完成 " + motherAndBabySignInTag);
     }
 
     back();
@@ -848,7 +861,7 @@ doCollectCubeSignIn = function () {
             obj.Title = btn1.child(btn1.childCount() - 1).text();
             obj.BtnName = obj.Title;
             obj.Button = btn1;
-            obj.Timeout = 15;
+            obj.Timeout = 20;
             objs.push(obj);
             commonAction.doOneWalkTasks(objs);
             sleep(2000);
@@ -981,6 +994,11 @@ dailySignIn.doDailySignIn = function () {
         }
 
         doSignIn(tag, signInList[tag]);
+        if (tag == clothStoreSignInTag) {
+            var nowDate = new Date().Format("yyyy-MM-dd");
+            common.safeSet(nowDate + ":" + clothStoreSignInTag, "done");
+            toastLog("完成 " + clothStoreSignInTag);
+        }
     });
 
     dailySignIn.signInTags.push(motherAndBabySignInTag);

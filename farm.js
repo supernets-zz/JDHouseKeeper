@@ -36,7 +36,7 @@ gotoFarm = function () {
 
     for (var i = 0; i < 10; i++) {
         //弹出每日签到提示、三餐领水滴提示
-        var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).findOne(1000);
+        var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).visibleToUser(true).findOne(1000);
         if (tips != null) {
             var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
             log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
@@ -325,7 +325,7 @@ farm.doGetDrops = function () {
             sleep(1000);
 
             //弹出每日签到提示、三餐领水滴提示
-            var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).findOne(1000);
+            var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).visibleToUser(true).findOne(1000);
             if (tips != null) {
                 var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
                 log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
@@ -482,6 +482,19 @@ farm.doPeriodGetDrops = function () {
             log("领取水滴: " + click(dones[0].bounds().centerX(), dones[0].bounds().centerY()));
             sleep(3000);
 
+            //弹出每日签到提示、三餐领水滴提示
+            var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).visibleToUser(true).findOne(1000);
+            if (tips != null) {
+                var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
+                toastLog(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
+                sleep(2000);
+            }
+
+            // 领取后任务列表有变不能点击旧的坐标
+            // 任务列表关闭按钮坐标
+            log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
+            sleep(2000);
+
             if (inTheMorning) {
                 common.safeSet(nowDate + ":" + morningGetDropsTag, "done");
                 toastLog("完成 " + morningGetDropsTag);
@@ -492,19 +505,6 @@ farm.doPeriodGetDrops = function () {
                 common.safeSet(nowDate + ":" + nightGetDropsTag, "done");
                 toastLog("完成 " + nightGetDropsTag);
             }
-
-            //弹出每日签到提示、三餐领水滴提示
-            var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).findOne(1000);
-            if (tips != null) {
-                var dlgCloseBtn = tips.parent().child(tips.parent().childCount() - 1);
-                log(tips.text() + " 关闭(" + dlgCloseBtn.bounds().centerX() + ", " + dlgCloseBtn.bounds().centerY() + "): " + click(dlgCloseBtn.bounds().centerX(), dlgCloseBtn.bounds().centerY()));
-                sleep(2000);
-            }
-
-            // 领取后任务列表有变不能点击旧的坐标
-            // 任务列表关闭按钮坐标
-            log("关闭领水滴任务列表: " + click(taskListCloseBtn.bounds().centerX(), taskListCloseBtn.bounds().centerY()));
-            sleep(2000);
             continue;
         } else {
             break;
