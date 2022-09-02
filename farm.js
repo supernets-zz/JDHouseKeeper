@@ -15,6 +15,9 @@ farm.dailyJobs.push(signInTag);
 farm.dailyJobs.push(subscribeGetDropsTag);
 // farm.dailyJobs.push(getDropsTag);
 
+var duckBtnX = 0;
+var duckBtnY = 0;
+
 gotoFarm = function () {
     var farmBtn = textMatches(/.*水果.*/).packageName(common.destPackageName).findOne(30000);
     if (farmBtn == null){
@@ -34,6 +37,8 @@ gotoFarm = function () {
         return null;
     }
 
+    duckBtnX = freeShipTips.bounds().centerX();
+    duckBtnY = freeShipTips.bounds().centerY() - 205;
     for (var i = 0; i < 10; i++) {
         //弹出每日签到提示、三餐领水滴提示
         var tips = textMatches(/打卡领水|定时领水/).packageName(common.destPackageName).visibleToUser(true).findOne(1000);
@@ -80,13 +85,13 @@ gotoFarm = function () {
     return freeShipTips.parent().parent();
 }
 
-doWateringTasks = function (tasklist, duckBtn) {
+doWateringTasks = function (tasklist) {
     for (var i = 0; i < tasklist.length; i++) {
         toastLog("点击 " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
         sleep(1000);
         //点鸭子
         for (var i = 0; i < 5; i++) {
-            log("点鸭子: " + click(duckBtn.bounds().centerX(), duckBtn.bounds().centerY()));
+            log("点鸭子: " + click(duckBtnX, duckBtnY));
             sleep(50);
         }
         var duckTips = common.waitForTextMatches(/.*鸭.*/, true, 8);
@@ -313,7 +318,7 @@ farm.doGetDrops = function () {
         }
 
         if (totalTasks.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
             commonAction.backToAppMainPage();
             return;
         }
@@ -359,7 +364,10 @@ farm.doGetDrops = function () {
                 btn.text() != "已收集" &&
                 btn.text() != "已领取" &&
                 btn.text() != "明日再来" &&
+                btn.text() != "去下单" && 
                 title != "帮2位好友浇水" &&
+                title.indexOf("超值万人团") == -1 && 
+                title.indexOf("抢万人团") == -1 && 
                 title.indexOf("专属特惠") == -1) {
                 var obj = {};
                 obj.Title = title;
@@ -391,7 +399,7 @@ farm.doGetDrops = function () {
         }
 
         wateringTaskList = common.filterTaskList(wateringTaskList, validTaskNames)
-        if (doWateringTasks(wateringTaskList, duckBtn)) {
+        if (doWateringTasks(wateringTaskList)) {
             //浇水任务不需要关闭任务列表，它自己会关闭
             continue;
         }

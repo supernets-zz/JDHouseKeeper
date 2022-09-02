@@ -6,6 +6,9 @@ var commonAction = require("./commonAction.js");
 const award618Tag = "宠汪汪逛商品得积分";
 const helpToFeedTag = "宠汪汪帮人喂狗粮";
 
+const dogFoodTaskTips = "./Pet/dogFoodTaskTips.jpg";
+const dogFoodTaskCloseBtn = "./Pet/closeBtn.jpg";
+
 gotoPet = function () {
     app.startActivity({
         action: "VIEW",
@@ -142,6 +145,8 @@ doSubscibeChannelTasks = function (tasklist) {
 doGetDogFoodTasks = function (actionBar) {
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     for (;;) {
+        log(actionBar);
+        log(actionBar.childCount());
         var getDogFoodBtn = actionBar.child(actionBar.childCount() - 2).child(2);
         var clickRet = click(getDogFoodBtn.bounds().centerX(), getDogFoodBtn.bounds().centerY());
         if (!clickRet) {
@@ -151,12 +156,25 @@ doGetDogFoodTasks = function (actionBar) {
 
         toastLog("点击 领狗粮(" + getDogFoodBtn.bounds().centerX() + ", " + getDogFoodBtn.bounds().centerY() + "): " + clickRet + ", 并等待 做任务得狗粮 出现, 15s超时");
         sleep(2000);
-        var foodTaskTips = common.waitForText("textContains", "做任务得狗粮", true, 15);
-        if (foodTaskTips == null) {
+        // var foodTaskTips = common.waitForText("textContains", "做任务得狗粮", true, 15);
+        // if (foodTaskTips == null) {
+        //     toastLog("no 做任务得狗粮");
+        //     return;
+        // }
+
+        // var closeBtn = foodTaskTips.parent().child(foodTaskTips.parent().childCount() - 2);
+        var dogFoodTaskTipsPt = common.waitForImageInRegion(dogFoodTaskTips, 0, 0, device.width, device.height / 2, 15);
+        if (dogFoodTaskTipsPt == null) {
+            toastLog("no 做任务得狗粮");
             return;
         }
 
-        var closeBtn = foodTaskTips.parent().child(foodTaskTips.parent().childCount() - 2);
+        var closeBtnPt = common.findImageInRegion(dogFoodTaskCloseBtn, device.width * 3 / 4, 0, device.width / 4, device.height / 2);
+        if (closeBtnPt == null) {
+            toastLog("no 关闭按钮");
+            return;
+        }
+
         var doneTaskList = [];  //已完成的任务，领取就行
         var oneWalkTaskList = [];  //逛逛会场、关注商品任务列表，待够时间回来
         var subscribeShopTaskList = []; //关注店铺任务列表
@@ -180,7 +198,7 @@ doGetDogFoodTasks = function (actionBar) {
         }
 
         if (totalTasks.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
             break;
         }
 
@@ -208,7 +226,7 @@ doGetDogFoodTasks = function (actionBar) {
                     subscribeChannelTaskList.push(obj);
                 // } else if (obj.Title.indexOf("帮好友") != -1) {
                 //     feedTaskList.push(obj);
-                } else if (obj.Title.indexOf("逛逛会场") != -1 || obj.Title.indexOf("关注商品") != -1 || obj.Title.indexOf("幸运任务") != -1) {
+                } else if (obj.Title.indexOf("逛逛会场") != -1 && obj.Tips.indexOf("签到领京豆") == -1 || obj.Title.indexOf("关注商品") != -1 || obj.Title.indexOf("幸运任务") != -1) {
                     oneWalkTaskList.push(obj);
                 }
                 log("未完成任务" + (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + tips);
@@ -220,7 +238,8 @@ doGetDogFoodTasks = function (actionBar) {
         var uncompleteTaskNum = doneTaskList.length + oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length;
         log("未完成任务数: " + uncompleteTaskNum);
         if (uncompleteTaskNum == 0) {
-            log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            // log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            log("关闭领狗粮任务列表: " + click(closeBtnPt.x, closeBtnPt.y));
             sleep(2000);
             break;
         }
@@ -230,28 +249,32 @@ doGetDogFoodTasks = function (actionBar) {
             clickRet = click(doneTaskList[0].Button.bounds().centerX(), doneTaskList[0].Button.bounds().centerY());
             log("点击 " + doneTaskList[0].BtnName + ": " + clickRet);
             sleep(1000);
-            log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            // log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            log("关闭领狗粮任务列表: " + click(closeBtnPt.x, closeBtnPt.y));
             sleep(2000);
             continue;
         }
 
         oneWalkTaskList = common.filterTaskList(oneWalkTaskList, validTaskNames)
         if (commonAction.doOneWalkTasks(oneWalkTaskList)) {
-            log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            // log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            log("关闭领狗粮任务列表: " + click(closeBtnPt.x, closeBtnPt.y));
             sleep(2000);
             continue;
         }
 
         subscribeShopTaskList = common.filterTaskList(subscribeShopTaskList, validTaskNames)
         if (commonAction.doWalkShopTasks(subscribeShopTaskList)) {
-            log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            // log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            log("关闭领狗粮任务列表: " + click(closeBtnPt.x, closeBtnPt.y));
             sleep(2000);
             continue;
         }
 
         subscribeChannelTaskList = common.filterTaskList(subscribeChannelTaskList, validTaskNames)
         if (doSubscibeChannelTasks(subscribeChannelTaskList)) {
-            log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            // log("关闭领狗粮任务列表: " + click(closeBtn.bounds().centerX(), closeBtn.bounds().centerY()));
+            log("关闭领狗粮任务列表: " + click(closeBtnPt.x, closeBtnPt.y));
             sleep(2000);
             continue;
         }

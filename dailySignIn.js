@@ -4,13 +4,21 @@ var common = require("./common.js");
 var commonAction = require("./commonAction.js");
 
 const dailySignInTag = "京东各场馆每日签到";
+//翻牌类
 const plusMemberSignInTag = "京东会员每日领京豆";
 const applianceSignInTag = "京东电器每日签到";
+//类京东图书
 const bookStoreSignInTag = "京东图书每日签到";
 const accompanyPlanSignInTag = "陪伴计划每日签到";
 const dressStoreSignInTag = "女装馆每日签到";
 const clothStoreSignInTag = "京东服饰每日签到";
 const jdInternationalSignInTag = "京东国际每日签到";
+const paipaiSecondHandSignInTag = "拍拍二手签到有礼";
+const dailyFuliSignInTag = "每日福利";
+const drugStoreSignInTag = "医药馆每日签到";
+const lifePrivilegeSignInTag = "生活特权天天领京豆";
+const carSignInTag = "京东汽车每日签到";
+
 const motherAndBabySignInTag = "母婴馆每日签到";
 const wineStoreSignInTag = "京东酒行每日签到";
 const jdGoldenRankSignInTag = "京东金榜每日签到";
@@ -31,6 +39,14 @@ dailySignIn.dailyJobs.push(dailySignInTag);
 
 dailySignIn.signInTags = [];
 
+needVerification = function () {
+    var verificationTips = textContains("完成验证").visibleToUser(true).findOne(3000);
+    if (verificationTips == null) {
+        return false;
+    }
+    return true;
+}
+
 //类似京东图书的 签到赢好礼 签到
 doSignIn = function (tag, url) {
     log("dailySignIn.doSignIn: " + tag + ", " + url);
@@ -39,8 +55,23 @@ doSignIn = function (tag, url) {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"' + url + '","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var signTips = common.waitForTextMatches(/.*签到赢好礼.*|.*签到拿京豆.*/, true, 30);
-    if (signTips == null) {
+    // var signTips = common.waitForTextMatches(/.*签到赢好礼.*|.*签到拿京豆.*|.*签到领京豆.*/, true, 30);
+    // if (signTips == null) {
+    //     var nowDate = new Date().Format("yyyy-MM-dd");
+    //     common.safeSet(nowDate + ":" + tag, "invalid");
+    //     toastLog("无效 " + tag);
+    //     back();
+    //     sleep(3000);
+    //     return;
+    // }
+
+    // sleep(3000);
+    // var signFrame = signTips.parent().child(signTips.parent().childCount() - 1);
+    // var signDays = signFrame.child(0);
+    // var signBtn = signFrame.child(1);
+
+    var signDays = common.waitForTextMatches(/已连续签到\d+天/, true, 30);
+    if (signDays == null) {
         var nowDate = new Date().Format("yyyy-MM-dd");
         common.safeSet(nowDate + ":" + tag, "invalid");
         toastLog("无效 " + tag);
@@ -50,8 +81,7 @@ doSignIn = function (tag, url) {
     }
 
     sleep(3000);
-    var signFrame = signTips.parent().child(signTips.parent().childCount() - 1);
-    var signDays = signFrame.child(0);
+    var signFrame = signDays.parent();
     var signBtn = signFrame.child(1);
 
     log(signDays.text() + ", " + signBtn.text());
@@ -61,7 +91,11 @@ doSignIn = function (tag, url) {
         toastLog("完成 " + tag);
     } else {
         log("点击 " + signBtn.text() + ": " + signBtn.click());
-        sleep(1000);
+        sleep(2000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + tag, "verification");
+            toastLog("需验证 " + tag);
+        }
     }
 
     back();
@@ -97,6 +131,10 @@ doFlipCardSignIn = function (tag, url) {
         var clickRet = signBtn.click();
         log("点击 立即翻牌: " + clickRet + ", 并等待 今日已签到 出现, 10s超时");
         sleep(5000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + tag, "verification");
+            toastLog("需验证 " + tag);
+        }
     } else {
         log(signBtn.text());
         var nowDate = new Date().Format("yyyy-MM-dd");
@@ -142,14 +180,14 @@ doMotherAndBabySignIn = function () {
     for (;;) {
         tips = textContains("我的京豆").visibleToUser(true).findOne(1000);
         if (tips == null) {
-            log("上划屏幕直到 我的京豆 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 2 / 7), 300));
+            log("上划屏幕直到 我的京豆 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 1 / 7), 300));
             sleep(5000);
         } else {
             break;
         }
 
         log("pass " + parseInt((new Date().getTime() - startTick) / 1000) + "s");
-        if (new Date().getTime() - startTick > 60 * 1000) {
+        if (new Date().getTime() - startTick > 80 * 1000) {
             log("timeout");
             break;
         }
@@ -175,6 +213,10 @@ doMotherAndBabySignIn = function () {
         clickRet = click(clickX, clickY);
         log("点击 (" + clickX + ", " + clickY + "): " + clickRet);
         sleep(5000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + motherAndBabySignInTag, "verification");
+            toastLog("需验证 " + motherAndBabySignInTag);
+        }
     } else {
         common.safeSet(nowDate + ":" + motherAndBabySignInTag, "done");
         toastLog("完成 " + motherAndBabySignInTag);
@@ -227,6 +269,10 @@ doWineStoreSignIn = function () {
         clickRet = click(clickX, clickY);
         log("点击 (" + clickX + ", " + clickY + "): " + clickRet);
         sleep(5000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + wineStoreSignInTag, "verification");
+            toastLog("需验证 " + wineStoreSignInTag);
+        }
     } else {
         common.safeSet(nowDate + ":" + wineStoreSignInTag, "done");
         toastLog("完成 " + wineStoreSignInTag);
@@ -488,7 +534,11 @@ doShoeStoreSignIn = function () {
     log(signBtn.text());
     if (signBtn.text() != "今日已签") {
         log("点击 " + signBtn.text() + ": " + signBtn.click());
-        sleep(1000);
+        sleep(2000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + shoeStoreSignInTag, "verification");
+            toastLog("需验证 " + shoeStoreSignInTag);
+        }
     }
 
     common.safeSet(nowDate + ":" + shoeStoreSignInTag, "done");
@@ -533,7 +583,11 @@ doBagStoreSignIn = function () {
     log(signBtn.text());
     if (signBtn.text() != "今日已签") {
         log("点击 " + signBtn.text() + ": " + signBtn.click());
-        sleep(1000);
+        sleep(2000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + bagStoreSignInTag, "verification");
+            toastLog("需验证 " + bagStoreSignInTag);
+        }
     }
 
     common.safeSet(nowDate + ":" + bagStoreSignInTag, "done");
@@ -570,7 +624,11 @@ doCampusSignIn = function () {
     log(signBtn.text());
     if (signBtn.text() != "今日已签") {
         log("点击 " + signBtn.text() + ": " + signBtn.click());
-        sleep(1000);
+        sleep(2000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + campusSignInTag, "verification");
+            toastLog("需验证 " + campusSignInTag);
+        }
     }
 
     common.safeSet(nowDate + ":" + campusSignInTag, "done");
@@ -611,6 +669,10 @@ doPersonalCareSignIn = function () {
         clickRet = click(signBtn.bounds().centerX(), signBtn.bounds().centerY());
         log("点击 立即翻牌: " + clickRet);
         sleep(3000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + personalCareSignInTag, "verification");
+            toastLog("需验证 " + personalCareSignInTag);
+        }
     }
 
     back();
@@ -643,7 +705,7 @@ doFavarite618TogetherSignIn = function () {
     var signFrame = signTips.parent();
     var signBtn = signFrame.child(signFrame.childCount() - 1);
     log("点击 " + signBtn.text() + ": " + signBtn.click());
-    sleep(1000);
+    sleep(2000);
     common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
     toastLog("完成 " + favarite618TogetherSignInTag);
 
@@ -694,7 +756,7 @@ dailySignIn.doEverydayRedEnvelopesSignIn = function () {
     var changeNum = chanceNumTips.text().match(/\d+/);
     toastLog("抽奖次数: " + changeNum[0] + ", 定时奖励 按钮: " + periodBonusBtn.text());
 
-    if (parseInt(changeNum[0]) == 0 && periodBonusBtn.text() == "已领取") {
+    if (parseInt(changeNum[0]) == 0 && (periodBonusBtn.text() == "已领取" || periodBonusBtn.text() == "明日再来")) {
         common.safeSet(nowDate + ":" + everydayRedEnvelopesSignInTag, "done");
         toastLog("完成 " + everydayRedEnvelopesSignInTag);
         commonAction.backToAppMainPage();
@@ -715,7 +777,7 @@ dailySignIn.doEverydayRedEnvelopesSignIn = function () {
         toastLog("任务数: " + totalTasks.length);
     
         if (totalTasks.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
             commonAction.backToAppMainPage();
             return;
         }
@@ -897,7 +959,7 @@ doBrandShoppingSignIn = function () {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://wqs.jd.com/portal/wx/seckill_m/brand.shtml?&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    var todaySelectedBtn = common.waitForText("text", "今日精选", true, 15);
+    var todaySelectedBtn = common.waitForText("textContains", "精选", true, 15);
     if (todaySelectedBtn == null) {
         back();
         sleep(3000);
@@ -915,6 +977,10 @@ doBrandShoppingSignIn = function () {
         var clickRet = signBtn.click();
         log("点击 立即签到: " + clickRet);
         sleep(5000);
+        if (needVerification()) {
+            common.safeSet(nowDate + ":" + brandShoppingSignInTag, "verification");
+            toastLog("需验证 " + brandShoppingSignInTag);
+        }
     } else {
         log(signBtn.text());
         var nowDate = new Date().Format("yyyy-MM-dd");
@@ -983,6 +1049,11 @@ dailySignIn.doDailySignIn = function () {
     signInList[dressStoreSignInTag] = "https://u.jd.com/NC92NR4";
     signInList[clothStoreSignInTag] = "https://u.jd.com/NK9Zbez";
     signInList[jdInternationalSignInTag] = "https://u.jd.com/ctABz2V";
+    signInList[paipaiSecondHandSignInTag] = "https://3.cn/1xJaw-6U?_ts=1657942902111&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
+    signInList[dailyFuliSignInTag] = "https://3.cn/1xJ-aZH2?_ts=1657943131146&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
+    signInList[drugStoreSignInTag] = "https://3.cn/1x-JzuUP?_ts=1657960133935&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
+    signInList[lifePrivilegeSignInTag] = "https://pro.m.jd.com/mall/active/3joSPpr7RgdHMbcuqoRQ8HbcPo9U/index.html?babelChannel=ttt1&channel=aIcon&PTAG=17053.1.1&hideyl=1&cu=true&utm_source=www.linkstars.com&utm_medium=tuiguang&utm_campaign=t_1000089893_156_0_184__85411432c7f0f631&utm_term=40a05c449e5546949dac0abbe53a833a";
+    signInList[carSignInTag] = "https://3.cn/-1yhWGRm?_ts=1659598984010&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
 
     Object.keys(signInList).forEach((tag) => {
         dailySignIn.signInTags.push(tag);
@@ -1019,11 +1090,11 @@ dailySignIn.doDailySignIn = function () {
     dailySignIn.signInTags.push(searchContentAppreciatorSignInTag);
     doSearchContentAppreciatorSignIn();
 
-    dailySignIn.signInTags.push(shoeStoreSignInTag);
-    doShoeStoreSignIn();
+    // dailySignIn.signInTags.push(shoeStoreSignInTag);
+    // doShoeStoreSignIn();
 
-    dailySignIn.signInTags.push(bagStoreSignInTag);
-    doBagStoreSignIn();
+    // dailySignIn.signInTags.push(bagStoreSignInTag);
+    // doBagStoreSignIn();
 
     dailySignIn.signInTags.push(campusSignInTag);
     doCampusSignIn();

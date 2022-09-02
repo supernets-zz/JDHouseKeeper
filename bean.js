@@ -9,6 +9,9 @@ const plantBeanTag = "签到领京豆.种豆得豆";
 const lotteryTag = "签到领京豆.抽京豆";
 const shakeTag = "签到领京豆.摇京豆";
 
+const moreTasksBtn = "./Bean/moreTasksBtn.jpg";
+const pickupMetchantBtn = "./Bean/pickupMerchantBtn.jpg";
+
 bean.dailyJobs = [];
 bean.dailyJobs.push(todayBeanTag);
 bean.dailyJobs.push(signInTag);
@@ -74,23 +77,31 @@ doPickupMerchantTasks = function (tasklist) {
     for (var i = 0; i < tasklist.length; i++) {
         toastLog("点击[" + (i+1) + "/" + tasklist.length + "] " + tasklist[i].Title + " " + tasklist[i].BtnName + ": " + click(tasklist[i].Button.bounds().centerX(), tasklist[i].Button.bounds().centerY()));
 
+        sleep(5000);
         //等到商品列表出现
         var merchantList = common.waitForText("text", "已获得", true, 5);
         if (merchantList == null) {
-            backToAppMainPage();
+            commonAction.backToAppMainPage();
             return;
         }
         
-        merchantList = packageName(common.destPackageName).className("android.widget.TextView").depth(16).drawingOrder(3).indexInParent(3).find();
+        merchantList = packageName(common.destPackageName).className("android.view.View").depth(26).drawingOrder(0).indexInParent(1).find();
 
-        //选择左侧的商品点击
-        log("商品数: " + merchantList.length);
-        var validMerchant = packageName(common.destPackageName).className("android.widget.TextView").depth(16).drawingOrder(3).indexInParent(3).visibleToUser(true).find();
-        //记录在屏幕内第一个商品的坐标
-        var clickx = validMerchant[0].bounds().centerX();
-        var clicky = validMerchant[0].bounds().centerY() + validMerchant[0].bounds().height() * 2;
+        var pickupMerchantBtnPt = common.findImageInRegion(pickupMetchantBtn, 0, device.height / 2, device.width / 2, device.height / 2);
+        if (pickupMerchantBtnPt == null) {
+            commonAction.backToAppMainPage();
+            return;
+        }
+
+        // //选择左侧的商品点击
+        // log("商品数: " + merchantList.length);
+        // var validMerchant = packageName(common.destPackageName).className("android.view.View").depth(26).drawingOrder(0).indexInParent(1).visibleToUser(true).find();
+        // //记录在屏幕内第一个商品的坐标
+        // var clickx = validMerchant[0].bounds().centerX();
+        // var clicky = validMerchant[0].bounds().centerY() + validMerchant[0].bounds().height() * 2;
         for (var ll = 0; ll < 6; ll++) {
-            toastLog("点击左侧商品: " + click(clickx, clicky));
+            // toastLog("点击左侧商品: " + click(clickx, clicky));
+            toastLog("点击左侧商品: " + click(pickupMerchantBtnPt.x, pickupMerchantBtnPt.y));
             sleep(3000);
             var noProduct = text("所选地区无货").findOne(1000);
             if (noProduct != null) {
@@ -162,7 +173,7 @@ bean.doUpgradeBeans = function () {
         }
 
         if (totalTasks.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
             break;
         }
 
@@ -212,17 +223,41 @@ bean.doUpgradeBeans = function () {
 }
 
 doGetNutrientTasks = function (growthTips) {
-    var moreTaskFrame = growthTips.parent().parent().parent().parent();
-    var moreTasksBtn = moreTaskFrame.child(moreTaskFrame.childCount() - 2);
+    // var moreTaskFrame = growthTips.parent().parent().parent().parent();
+    // var moreTasksBtn = moreTaskFrame.child(moreTaskFrame.childCount() - 2);
 
-    var clickRet = click(moreTasksBtn.bounds().centerX(), moreTasksBtn.bounds().centerY());
+    // var moreTaskTips = text("更多任务").visibleToUser(true).findOne(1000);
+    // if (moreTaskTips == null) {
+    //     toastLog("no 更多任务");
+    //     return;
+    // }
+    
+    // var moreTasksBtn = moreTaskTips.parent();
+    // var clickRet = click(moreTasksBtn.bounds().centerX(), moreTasksBtn.bounds().centerY());
+    // if (!clickRet) {
+    //     toastLog("点击 更多任务: " + clickRet);
+    //     return;
+    // }
+
+    var moreTasksBtnPt = common.findImageInRegion(moreTasksBtn, device.width * 3 / 4, device.height * 3 / 4, device.width / 4, device.height / 4);
+    if (moreTasksBtnPt == null) {
+        toastLog("no 更多任务");
+        return;
+    }
+
+    var clickRet = click(moreTasksBtnPt.x, moreTasksBtnPt.y);
     if (!clickRet) {
         toastLog("点击 更多任务: " + clickRet);
         return;
     }
 
-    log("点击 更多任务: " + clickRet + ", 并等待 /已获得\d+\/\d+瓶 出现, 15s超时");
-    common.waitForTextMatches(/已获得\d+\/\d+瓶/, true, 15);
+    sleep(5000);
+    log("点击 更多任务: " + clickRet + ", 并等待 已获得 出现, 15s超时");
+    var progress = common.waitForText("textContains", "已获得", true, 15);
+    if (progress == null) {
+        toastLog("timeout");
+        return;
+    }
 
     // 做完任务后列表会刷新，不能用旧的坐标去点击，需要重新获取一下任务列表
     // 除了去邀请以及两个去签到任务以外其他都做完了就算完成
@@ -235,12 +270,12 @@ doGetNutrientTasks = function (growthTips) {
         var totalTasks = [];
         var validTaskNames = [];
         for (var j = 0; j < 10 && validTaskNames.length == 0; j++) {
-            totalTasks = packageName(common.destPackageName).textMatches(/已获得\d+\/\d+瓶/).find();
+            totalTasks = packageName(common.destPackageName).textContains("已获得").find();
             for (var i = 0; i < totalTasks.length; i++) {
-                var taskItem = totalTasks[i].parent().parent();
-                var btn = taskItem.child(taskItem.childCount() - 1);
+                var taskItem = totalTasks[i].parent().parent().parent().parent().parent().parent().parent();
+                var btn = taskItem.child(0).child(0).child(1);
                 if (btn.bounds().height() > 50) {
-                    validTaskNames.push(taskItem.child(1).text());
+                    validTaskNames.push(taskItem.child(0).child(0).child(0).child(1).child(0).text());
                 }
             }
             toastLog("任务数: " + totalTasks.length + ", 可见: " + validTaskNames.length + ", " + validTaskNames);
@@ -250,24 +285,23 @@ doGetNutrientTasks = function (growthTips) {
         }
 
         if (totalTasks.length == 0) {
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
             break;
         }
 
         totalTasks.forEach(function (tv) {
-            var taskItem = tv.parent().parent();
-            var title = taskItem.child(1).text();
-            var progress = taskItem.child(2).child(taskItem.child(2).childCount() - 1).text();
-            var tips = taskItem.child(taskItem.childCount() - 2).text();
-            var btn = taskItem.child(taskItem.childCount() - 1).child(0);
+            var taskItem = tv.parent().parent().parent().parent().parent().parent().parent();
+            var title = taskItem.child(0).child(0).child(0).child(1).child(0).text();
+            var tips = taskItem.child(0).child(0).child(0).child(1).child(2).text();
+            var btn = taskItem.child(0).child(0).child(1);
             if (btn.text() != "" && 
                 btn.text() != "去邀请" && 
                 btn.text() != "去签到" && 
                 btn.text() != "已完成" &&
-                title != "免费水果") {
+                title != "免费水果" &&
+                title != "万人团下单") {
                 var obj = {};
                 obj.Title = title;
-                obj.Progress = progress;
                 obj.Tips = tips;
                 obj.BtnName = btn.text();
                 obj.Button = btn;
@@ -280,9 +314,9 @@ doGetNutrientTasks = function (growthTips) {
                 } else {
                     oneWalkTaskList.push(obj);
                 }
-                log("未完成任务" + (oneWalkTaskList.length + subscribeTaskList.length + walkShopTaskList.length + pickupMerchantTaskList.length) + ": " + obj.Title + ", " + obj.Progress + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + tips);
+                log("未完成任务" + (oneWalkTaskList.length + subscribeTaskList.length + walkShopTaskList.length + pickupMerchantTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + tips);
             } else {
-                log("跳过任务: " + title + ", " + progress + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + tips);
+                log("跳过任务: " + title + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + tips);
             }
         });
 
@@ -387,8 +421,8 @@ getFriendsNutrients = function () {
         return;
     }
 
-    var frame = nutrientTips.parent();
-    var hScrollView = frame.child(2).child(0);
+    var frame = nutrientTips.parent().parent();
+    var hScrollView = frame.child(1);
     for (var i = 0; i < 3; i++) {
         var tips = textMatches(/喊TA回来|可能认识的人/).visibleToUser(true).find();
         for (var j = 0; j < tips.length; j++) {
@@ -443,8 +477,8 @@ bean.doRoutine = function () {
         return;
     }
 
-    log("点击 种豆得豆: " + clickRet + ", 并等待 豆苗成长值 出现, 15s超时");
-    var growthTips = common.waitForText("text", "豆苗成长值", true, 15);
+    log("点击 种豆得豆: " + clickRet + ", 并等待 豆苗成长值 出现, 30s超时");
+    var growthTips = common.waitForText("text", "豆苗成长值", true, 30);
     if (growthTips == null) {
         commonAction.backToAppMainPage();
         return;
@@ -518,6 +552,9 @@ bean.isSignInDone = function () {
 bean.doSignIn = function () {
     log("bean.doSignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");
+    // common.safeSet(nowDate + ":" + signInTag, null);
+    // common.safeSet(nowDate + ":" + lotteryTag, null);
+    // common.safeSet(nowDate + ":" + shakeTag, null);
     var done = common.safeGet(nowDate + ":" + signInTag);
     if (done != null) {
         log(signInTag + " 已做: " + done);
@@ -525,17 +562,13 @@ bean.doSignIn = function () {
     }
 
     toast("bean.doSignIn");
-    app.startActivity({
-        action: "VIEW",
-        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://bean.m.jd.com/rank/index.action","M_sourceFrom":"mxz","msf_type":"auto"}'
-    });
-
-    var doubleSignInTask = common.waitForText("text", "双签领豆", true, 15);
-    if (doubleSignInTask == null) {
+    var actionBar = gotoBean();
+    if (actionBar == null) {
         commonAction.backToAppMainPage();
         return;
     }
 
+    sleep(5000);
     var clickRet = false;
     var signBtn = text("签到领京豆").visibleToUser(true).findOne(1000);
     if (signBtn != null) {
@@ -546,47 +579,18 @@ bean.doSignIn = function () {
         sleep(3000);
     }
 
-    doubleSignInTask = text("双签领豆").visibleToUser(true).findOne(1000);
-    var taskList = doubleSignInTask.parent().parent().parent().parent().parent();
-    var isPlantBeanDone = common.safeGet(nowDate + ":" + plantBeanTag);
-    if (isPlantBeanDone == null) {
-        clickRet = click(taskList.child(0).bounds().centerX(), taskList.child(0).bounds().centerY());
-        log("点击 种豆得豆: " + clickRet + ", 并等待10s后返回");
-        sleep(10000);
-        back();
-        sleep(3000);
-        common.safeSet(nowDate + ":" + plantBeanTag, "done");
-        toastLog("完成 " + plantBeanTag);
+    actionBar = packageName("com.jingdong.app.mall").className("android.widget.HorizontalScrollView").findOne(1000);
+    if (actionBar == null) {
+        commonAction.backToAppMainPage();
+        return;
     }
 
-    var isLotteryDone = common.safeGet(nowDate + ":" + lotteryTag);
-    if (isLotteryDone == null) {
-        var lotteryTask = text("抽京豆").visibleToUser(true).findOne(1000);
-        var lotteryBtn = lotteryTask.parent().parent().parent().parent();
-        clickRet = click(lotteryBtn.bounds().centerX(), lotteryBtn.bounds().centerY());
-        log("点击 抽京豆: " + clickRet + ", 并等待 查看规则 出现，15s超时");
-
-        var ruleTips = common.waitForText("text", "查看规则", true, 15);
-        if (ruleTips == null) {
-            commonAction.backToAppMainPage();
-            return;
-        }
-
-        var rotary = ruleTips.parent().parent().child(0).child(0).child(0);
-        clickRet = click(rotary.bounds().centerX(), rotary.bounds().centerY());
-        log("点击 开始抽奖: " + clickRet + ", 并等待10s");
-
-        sleep(10000);
-        back();
-        sleep(3000);
-        common.safeSet(nowDate + ":" + lotteryTag, "done");
-        toastLog("完成 " + lotteryTag);
-    }
+    actionBar = actionBar.child(0);
 
     var isShakeDone = common.safeGet(nowDate + ":" + shakeTag);
+    log(nowDate + ":" + shakeTag + ": " + isShakeDone);
     if (isShakeDone == null) {
-        var shakeTask = text("摇京豆").visibleToUser(true).findOne(1000);
-        var shakeBtn = shakeTask.parent().parent().parent().parent();
+        var shakeBtn = actionBar.child(2);
         clickRet = click(shakeBtn.bounds().centerX(), shakeBtn.bounds().centerY());
         log("点击 摇京豆: " + clickRet + ", 并等待 /立即签到 领京豆|领取摇盒子次数|点击有惊喜/ 出现，15s超时");
 
@@ -598,6 +602,33 @@ bean.doSignIn = function () {
 
         clickRet = click(shakeBoxBtn.bounds().centerX(), shakeBoxBtn.bounds().centerY());
         log("点击 /立即签到 领京豆|领取摇盒子次数|点击有惊喜/: " + clickRet + ", 并等待10s");
+
+        sleep(10000);
+        back();
+        sleep(3000);
+        common.safeSet(nowDate + ":" + shakeTag, "done");
+        toastLog("完成 " + shakeTag);
+    }
+
+    var isLotteryDone = common.safeGet(nowDate + ":" + lotteryTag);
+    log(nowDate + ":" + lotteryTag + ": " + isLotteryDone);
+    if (isLotteryDone == null) {
+        var lotteryBtn = actionBar.child(4);
+        clickRet = click(lotteryBtn.bounds().centerX(), lotteryBtn.bounds().centerY());
+        log("点击 抽京豆: " + clickRet + ", 并等待 查看规则 出现，15s超时");
+
+        var ruleTips = common.waitForText("text", "查看规则", true, 15);
+        if (ruleTips == null) {
+            commonAction.backToAppMainPage();
+            return;
+        }
+
+        // var rotary = ruleTips.parent().parent().child(0).child(0).child(0);
+        // clickRet = click(rotary.bounds().centerX(), rotary.bounds().centerY());
+        // log("点击 开始抽奖: " + clickRet + ", 并等待10s");
+        var rotary = ruleTips.parent().parent().child(0).child(1);
+        clickRet = rotary.click();
+        log("点击 开始抽奖: " + clickRet + ", 并等待10s");
 
         sleep(10000);
         back();

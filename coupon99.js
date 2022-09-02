@@ -38,13 +38,13 @@ coupon99.doSignIn = function () {
     }
 
     var clickRet = coupon99Btn.parent().click();
-    log("点击 券后9.9: " + clickRet + ", 并等待 天天领奖 出现, 15s超时");
+    log("点击 券后9.9: " + clickRet + ", 并等待 天天领奖 出现, 30s超时");
     if (!clickRet) {
         commonAction.backToAppMainPage();
         return;
     }
 
-    var getAwardTips = common.waitForText("text", "天天领奖", true, 15);
+    var getAwardTips = common.waitForText("text", "天天领奖", true, 30);
     if (getAwardTips == null) {
         commonAction.backToAppMainPage();
         return;

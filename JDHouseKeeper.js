@@ -9,6 +9,7 @@ var coupon99 = require("./coupon99.js");
 var farm = require("./farm.js");
 var bean = require("./bean.js");
 var pet = require("./pet.js");
+var happinessStore = require("./happinessStore.js");
 
 var shutdownFlag = threads.atomic();
 var background = threads.disposable();
@@ -195,7 +196,12 @@ function mainWorker() {
         var isLoged = commonAction.loopJudgeAppMainPage(6000);
         if (!isLoged) {
             toastLog(common.destAppName + " is unknown status");
-            captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            // 中文
+            var btnClose = text("关闭应用").findOne(10000);
+            if (btnClose != null) {
+                log("无响应，点击 关闭应用" + btnClose.click());
+            } 
+            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
         } else {
             // 我的
             bean.calcBeanIncome();
@@ -236,6 +242,8 @@ function mainWorker() {
                 // 我的-> 宠汪汪-> 领狗粮，每日一次
                 pet.doRoutine();
 
+                happinessStore.doRoutine();
+
                 ret = true;
             // } else {
             //     ret = false;
@@ -243,6 +251,7 @@ function mainWorker() {
         }
 	} catch(e) {
 		console.error("mainWorker",e);
+        toast(e);
     } finally {
 		commonAction.backToAppMainPage();
 		home();
