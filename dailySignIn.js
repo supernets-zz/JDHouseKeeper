@@ -1245,7 +1245,7 @@ dailySignIn.isSignInDone = function () {
 dailySignIn.doDailySignIn = function () {
     log("dailySignIn.doDailySignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");
-    common.safeSet(nowDate + ":" + dailySignInTag, null);
+    // common.safeSet(nowDate + ":" + dailySignInTag, null);
     var done = common.safeGet(nowDate + ":" + dailySignInTag);
     if (done != null) {
         log(dailySignInTag + " 已做: " + done);
