@@ -367,6 +367,7 @@ farm.doGetDrops = function () {
                 btn.text() != "去下单" && 
                 title != "帮2位好友浇水" &&
                 title.indexOf("超值万人团") == -1 && 
+                title.indexOf("去买农特产得水滴") == -1 && 
                 title.indexOf("抢万人团") == -1 && 
                 title.indexOf("专属特惠") == -1) {
                 var obj = {};

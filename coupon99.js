@@ -73,12 +73,7 @@ coupon99.doSignIn = function () {
         toastLog("完成 " + signInTag);
     } else {
         var signBtn = canExchangeTips.parent().parent().parent().child(1).child(0);
-        if (/\d+点点券待领取/.test(signBtn.text())) {
-            common.safeSet(nowDate + ":" + signInTag, "done");
-            toastLog("完成 " + signInTag);
-        } else if (signBtn.text() == "立即翻牌") {
-            clickRet = signBtn.parent().click();
-            log("点击 立即翻牌: " + clickRet);
+        if (/\d+点点券待领.*/.test(signBtn.text())) {
             common.safeSet(nowDate + ":" + signInTag, "done");
             toastLog("完成 " + signInTag);
         } else {
