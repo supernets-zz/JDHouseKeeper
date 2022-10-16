@@ -57,7 +57,8 @@ checkDogBowl = function () {
         var feed20gBtn = doFeedBtn.parent().child(doFeedBtn.parent().childCount() - 4);
         var feed40gBtn = doFeedBtn.parent().child(doFeedBtn.parent().childCount() - 3);
         var feed80gBtn = doFeedBtn.parent().child(doFeedBtn.parent().childCount() - 2);
-        var feedChoice = [feed10gBtn, feed20gBtn, feed40gBtn, feed80gBtn];
+        // var feedChoice = [feed10gBtn, feed20gBtn, feed40gBtn, feed80gBtn];
+        var feedChoice = [feed10gBtn, feed20gBtn, feed40gBtn];
         var choice = Math.floor(Math.random() * feedChoice.length);
         var todayFeedCount = doFeedBtn.parent().child(1);
 
@@ -226,7 +227,10 @@ doGetDogFoodTasks = function (actionBar) {
                     subscribeChannelTaskList.push(obj);
                 // } else if (obj.Title.indexOf("帮好友") != -1) {
                 //     feedTaskList.push(obj);
-                } else if (obj.Title.indexOf("逛逛会场") != -1 && obj.Tips.indexOf("签到领京豆") == -1 || obj.Title.indexOf("关注商品") != -1 || obj.Title.indexOf("幸运任务") != -1) {
+                } else if (obj.Title.indexOf("逛逛会场") != -1 && 
+                    obj.Tips.indexOf("签到领京豆") == -1 || 
+                    obj.Title.indexOf("关注商品") != -1/* || 
+                    obj.Title.indexOf("幸运任务") != -1*/) {
                     oneWalkTaskList.push(obj);
                 }
                 log("未完成任务" + (oneWalkTaskList.length + subscribeShopTaskList.length + subscribeChannelTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + tips);
