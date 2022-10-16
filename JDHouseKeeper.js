@@ -10,6 +10,7 @@ var farm = require("./farm.js");
 var bean = require("./bean.js");
 var pet = require("./pet.js");
 var happinessStore = require("./happinessStore.js");
+var live = require("./live.js");
 
 var shutdownFlag = threads.atomic();
 var background = threads.disposable();
@@ -170,6 +171,7 @@ function isAllDailyTaskComplete() {
     taskList.push.apply(taskList, coupon99.dailyJobs);
     taskList.push.apply(taskList, farm.dailyJobs);
     taskList.push.apply(taskList, bean.dailyJobs);
+    taskList.push.apply(taskList, live.dailyJobs);
     for (var i = 0; i < taskList.length; i++) {
         var done = common.safeGet(nowDate + ":" + taskList[i]);
         if (done == null) {
@@ -203,6 +205,8 @@ function mainWorker() {
             } 
             // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
         } else {
+///*
+// bean.doRoutine();
             // 我的
             bean.calcBeanIncome();
 
@@ -220,6 +224,7 @@ function mainWorker() {
 
             dailySignIn.doEverydayRedEnvelopesSignIn();
 
+            live.doSignIn();
             // if (bean.isSignInDone() && 
             //     farm.isSignInDone() && 
             //     coupon99.isSignInDone() && 
@@ -241,7 +246,7 @@ function mainWorker() {
 
                 // 我的-> 宠汪汪-> 领狗粮，每日一次
                 pet.doRoutine();
-
+// */
                 happinessStore.doRoutine();
 
                 ret = true;
