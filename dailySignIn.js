@@ -20,6 +20,8 @@ const lifePrivilegeSignInTag = "生活特权天天领京豆";
 const carSignInTag = "京东汽车每日签到";
 const nearbySignInTag = "附近频道签到瓜分京豆";
 const customManClothSignInTag = "定制男装每日签到";
+const beqingsongSignInTag = "京东智能每日签到";
+const jingpinFavariteSignInTag = "京品种草馆每日签到";
 
 const motherAndBabySignInTag = "母婴馆每日签到";
 const petLifeSignInTag = "宠物生活每日签到";
@@ -38,6 +40,8 @@ const favarite618TogetherSignInTag = "618和你一起种草每日签到"; //6月
 const everydayRedEnvelopesSignInTag = "天天红包每日签到";
 const collectCubeSignInTag = "集魔方赢大奖";
 const brandShoppingSignInTag = "品牌闪购每日签到";
+
+const invalidTips = "./DailySignIn/invalidTips.jpg";
 
 dailySignIn.dailyJobs = [];
 dailySignIn.dailyJobs.push(dailySignInTag);
@@ -75,9 +79,9 @@ doSignIn = function (tag, url) {
     // var signDays = signFrame.child(0);
     // var signBtn = signFrame.child(1);
 
-    if (tag == customManClothSignInTag) {
+    if (tag == customManClothSignInTag || tag == jingpinFavariteSignInTag) {
         sleep(5000);
-        log("上划屏幕 连续签到 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 1 / 7), 300));
+        toastLog("上划屏幕 连续签到 出现: " + swipe(device.width / 2, Math.floor(device.height * 6 / 7), device.width / 2, Math.floor(device.height * 1 / 7), 300));
         sleep(3000);
     }
 
@@ -326,25 +330,26 @@ doLuxuryStoreSignIn = function () {
         return;
     }
 
-    toast("dailySignIn.doPetLifeSignIn");
+    toast("dailySignIn.doLuxuryStoreSignIn");
     app.startActivity({
         action: "VIEW",
-        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"    https://3.cn/-1zbioON?_ts=1662191403938&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI","M_sourceFrom":"mxz","msf_type":"auto"}'
+        data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://prodev.m.jd.com/mall/active/24mfJCMuf9d32RkVHNcebAhhxywF/index.html?_ts=1661655354438&utm_user=plusmember&gx=RnFkwWNbbGfbytRP--sBCgntys0oZVFAD4g&ad_od=share&cu=true&utm_source=www.linkstars.com&utm_medium=tuiguang&utm_campaign=t_1000089893_156_0_184__999e7ea7fc472942&utm_term=c5e65b78088e4e01a0842c2de4afa484","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
-    //等待搜索框出现
-    for (var i = 0; i < 15; i++) {
-        var search = packageName(common.destPackageName).className("android.widget.EditText").depth(21).drawingOrder(0).indexInParent(0).find();
-        log("等待 搜索框: " + search.length);
-        if (search.length == 1) {
-            break;
-        }
-        sleep(1000);
-    }
+    sleep(5000);
+    // //等待搜索框出现
+    // for (var i = 0; i < 15; i++) {
+    //     var search = packageName(common.destPackageName).className("android.widget.EditText").depth(21).drawingOrder(0).indexInParent(0).find();
+    //     log("等待 搜索框: " + search.length);
+    //     if (search.length == 1) {
+    //         break;
+    //     }
+    //     sleep(1000);
+    // }
 
-    if (i == 15) {
-        return;
-    }
+    // if (i == 15) {
+    //     return;
+    // }
 
     var startTick = new Date().getTime();
     var tips = null;
@@ -367,7 +372,7 @@ doLuxuryStoreSignIn = function () {
     sleep(3000);
     var signFrame = tips.parent();
     var signCalendarListParent = null;
-    log("signFrame.childCount(): " + signFrame.childCount());
+    toastLog("signFrame.childCount(): " + signFrame.childCount());
     if (signFrame.childCount() == 4) {
         signCalendarListParent = signFrame.child(signFrame.childCount() - 1);
     } else if (signFrame.childCount() == 5) {
@@ -375,14 +380,14 @@ doLuxuryStoreSignIn = function () {
     }
     var signCalendarList = signCalendarListParent.child(signCalendarListParent.childCount() - 1);
 
-    log("签到日历子节点个数: " + signCalendarList.childCount());
+    toastLog("签到日历子节点个数: " + signCalendarList.childCount());
     if (signCalendarList.childCount() == 15) {
         var fingerBtn = signCalendarList.child(signCalendarList.childCount() - 1);
         //点击手指左上角1/4处正好处于需要签到当日的中心处
         var clickX = fingerBtn.bounds().left + Math.floor(fingerBtn.bounds().width() / 4);
         var clickY = fingerBtn.bounds().top + Math.floor(fingerBtn.bounds().height() / 4);
         clickRet = click(clickX, clickY);
-        log("点击 (" + clickX + ", " + clickY + "): " + clickRet);
+        toastLog("点击 (" + clickX + ", " + clickY + "): " + clickRet);
         sleep(5000);
         if (needVerification()) {
             common.safeSet(nowDate + ":" + luxuryStoreSignInTag, "verification");
@@ -930,7 +935,7 @@ doFavarite618TogetherSignIn = function () {
     }
 
     var signFrame = signTips.parent();
-    var signBtn = signFrame.child(signFrame.childCount() - 1);
+    var signBtn = signFrame.child(signFrame.childCount() - 2);
     log("点击 " + signBtn.text() + ": " + signBtn.click());
     sleep(2000);
     common.safeSet(nowDate + ":" + favarite618TogetherSignInTag, "done");
@@ -973,9 +978,17 @@ dailySignIn.doEverydayRedEnvelopesSignIn = function () {
     }
 
     var totalTasks = packageName(common.destPackageName).text("每日浏览活动8秒，送1次抽奖机会").find();
-    var swipeHeight = totalTasks[1].bounds().top - totalTasks[0].bounds().top;
-    log("上划屏幕: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height * 7 / 8) - swipeHeight * totalTasks.length, 500));
-    sleep(2000);
+    toastLog("totalTasks.length: " + totalTasks.length);
+    if (totalTasks.length != 0) {
+        var swipeHeight = totalTasks[1].bounds().top - totalTasks[0].bounds().top;
+        for (var i = totalTasks.length; i > 0; i--) {
+            if (Math.floor(device.height * 7 / 8) - i > 0) {
+                log("上划屏幕: " + swipe(device.width / 2, Math.floor(device.height * 7 / 8), device.width / 2, Math.floor(device.height * 7 / 8) - i, 500));
+                sleep(2000);
+                break;
+            }
+        }
+    }
 
     var periodBonusTitle = text("定时奖励").findOne(1000);
     var periodBonusTaskItem = periodBonusTitle.parent();
@@ -996,68 +1009,71 @@ dailySignIn.doEverydayRedEnvelopesSignIn = function () {
         sleep(2000);
     }
 
-    var startTick = new Date().getTime();
-    for (;;) {
-        var oneWalkTaskList = [];   //浏览任务列表，浏览完成后返回
-        var doneTaskList = [];
-        var totalTasks = packageName(common.destPackageName).text("每日浏览活动8秒，送1次抽奖机会").visibleToUser(true).find();
-        toastLog("任务数: " + totalTasks.length);
-    
-        if (totalTasks.length == 0) {
-            // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
-            commonAction.backToAppMainPage();
-            return;
-        }
-    
-        totalTasks.forEach(function(tv) {
-            var taskItem = tv.parent();
-            var title = taskItem.child(1).text();
-            var btn = taskItem.child(taskItem.childCount() - 1);
-            if (/去浏览|立即领取/.test(btn.text())) {
-                var obj = {};
-                obj.Title = title;
-                obj.BtnName = btn.text();
-                obj.Button = btn;
-                if (btn.text() == "去浏览") {
-                    oneWalkTaskList.push(obj);
-                } else if (btn.text() == "立即领取") {
-                    doneTaskList.push(obj);
+    if (totalTasks.length != 0) {
+        var startTick = new Date().getTime();
+        for (;;) {
+            var oneWalkTaskList = [];   //浏览任务列表，浏览完成后返回
+            var doneTaskList = [];
+            var totalTasks = packageName(common.destPackageName).text("每日浏览活动8秒，送1次抽奖机会").visibleToUser(true).find();
+            toastLog("任务数: " + totalTasks.length);
+
+            // if (totalTasks.length == 0) {
+            //     // captureScreen("/sdcard/Download/" + (new Date().Format("yyyy-MM-dd HH:mm:ss")) + ".png");
+            //     commonAction.backToAppMainPage();
+            //     return;
+            // }
+
+            totalTasks.forEach(function(tv) {
+                var taskItem = tv.parent();
+                var title = taskItem.child(1).text();
+                var btn = taskItem.child(taskItem.childCount() - 1);
+                if (/去浏览|立即领取/.test(btn.text())) {
+                    var obj = {};
+                    obj.Title = title;
+                    obj.BtnName = btn.text();
+                    obj.Button = btn;
+                    if (btn.text() == "去浏览") {
+                        oneWalkTaskList.push(obj);
+                    } else if (btn.text() == "立即领取") {
+                        doneTaskList.push(obj);
+                    }
+                    log("未完成任务" + (oneWalkTaskList.length + doneTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + obj.Button.bounds().height());
+                } else {
+                    log("跳过任务: " + title + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + btn.bounds().height());
                 }
-                log("未完成任务" + (oneWalkTaskList.length + doneTaskList.length) + ": " + obj.Title + ", " + obj.BtnName + ", (" + obj.Button.bounds().centerX() + ", " + obj.Button.bounds().centerY() + "), " + obj.Button.bounds().height());
-            } else {
-                log("跳过任务: " + title + ", " + btn.text() + ", (" + btn.bounds().centerX() + ", " + btn.bounds().centerY() + "), " + btn.bounds().height());
+            });
+
+            var uncompleteTaskNum = oneWalkTaskList.length + doneTaskList.length;
+            log("未完成任务数: " + uncompleteTaskNum);
+            if (uncompleteTaskNum == 0) {
+                break;
             }
-        });
+
+            for (var i = 0; i < oneWalkTaskList.length; i++) {
+                var objs = [];
+                objs.push(oneWalkTaskList[i]);
+                if (commonAction.doOneWalkTasks(objs)) {
+                    sleep(2000);
+                    var clickRet = click(oneWalkTaskList[i].Button.bounds().centerX(), oneWalkTaskList[i].Button.bounds().centerY());
+                    log("点击 立即领取: " + clickRet);
+                    sleep(2000);
+                }
+            }
     
-        var uncompleteTaskNum = oneWalkTaskList.length + doneTaskList.length;
-        log("未完成任务数: " + uncompleteTaskNum);
-        if (uncompleteTaskNum == 0) {
-            break;
-        }
-    
-        for (var i = 0; i < oneWalkTaskList.length; i++) {
-            var objs = [];
-            objs.push(oneWalkTaskList[i]);
-            if (commonAction.doOneWalkTasks(objs)) {
+            for (var i = 0; i < doneTaskList.length; i++) {
+                var clickRet = click(doneTaskList[i].Button.bounds().centerX(), doneTaskList[i].Button.bounds().centerY());
+                log("点击 " + doneTaskList[i].BtnName + ": " + clickRet);
                 sleep(2000);
-                var clickRet = click(oneWalkTaskList[i].Button.bounds().centerX(), oneWalkTaskList[i].Button.bounds().centerY());
-                log("点击 立即领取: " + clickRet);
-                sleep(2000);
+            }
+
+            if (new Date().getTime() - startTick > 2 * 60 * 1000) {
+                break;
             }
         }
 
-        for (var i = 0; i < doneTaskList.length; i++) {
-            var clickRet = click(doneTaskList[i].Button.bounds().centerX(), doneTaskList[i].Button.bounds().centerY());
-            log("点击 " + doneTaskList[i].BtnName + ": " + clickRet);
-            sleep(2000);
-        }
-
-        if (new Date().getTime() - startTick > 2 * 60 * 1000) {
-            break;
-        }
+        log("下划到顶抽奖: " + swipe(device.width / 2, Math.floor(device.height / 8), device.width / 2, Math.floor(device.height / 8) + totalTasks.length * swipeHeight, 800));    
     }
 
-    log("下划到顶抽奖: " + swipe(device.width / 2, Math.floor(device.height / 8), device.width / 2, Math.floor(device.height / 8) + totalTasks.length * swipeHeight, 800));
     var chanceNumTips = textMatches(/还剩\d+次机会/).findOne(1000);
     if (chanceNumTips == null) {
         commonAction.backToAppMainPage();
@@ -1098,12 +1114,27 @@ doCollectCubeSignIn = function () {
         data: 'openApp.jdMobile://virtual?params={"category":"jump","action":"to","des":"m","sourceValue":"JSHOP_SOURCE_VALUE","sourceType":"JSHOP_SOURCE_TYPE","url":"https://u.jd.com/2K2aV0M","M_sourceFrom":"mxz","msf_type":"auto"}'
     });
 
+    common.waitForText("text", "集魔方 赢大奖", true, 15);
+    sleep(5000);
+
     click(device.width / 2, device.height / 2);
     sleep(2000);
     click(device.width / 2, device.height / 2);
     sleep(2000);
     click(device.width / 2, device.height / 2);
     sleep(2000);
+
+    var invalidTipsPt = common.findImageInRegion(invalidTips, 0, 0, device.width, device.height / 2);
+    if (invalidTipsPt != null) {
+        common.safeSet(nowDate + ":" + collectCubeSignInTag, "invalid");
+        toastLog("无效 " + collectCubeSignInTag);
+
+        back();
+        sleep(3000);
+        return;
+    } else {
+        toastLog("normal");
+    }
 
     sleep(10000);
     var signBtn = text("立即签到").findOne(1000);
@@ -1246,6 +1277,7 @@ dailySignIn.doDailySignIn = function () {
     log("dailySignIn.doDailySignIn");
     var nowDate = new Date().Format("yyyy-MM-dd");
     // common.safeSet(nowDate + ":" + dailySignInTag, null);
+    // common.safeSet(nowDate + ":" + dailySignInTag, "done");
     var done = common.safeGet(nowDate + ":" + dailySignInTag);
     if (done != null) {
         log(dailySignInTag + " 已做: " + done);
@@ -1284,11 +1316,17 @@ dailySignIn.doDailySignIn = function () {
     signInList[carSignInTag] = "https://3.cn/-1yhWGRm?_ts=1659598984010&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
     signInList[nearbySignInTag] = "https://prodev.m.jd.com/mall/active/3MFSkPGCDZrP2WPKBRZdiKm9AZ7D/index.html?cu=true&addressID=0&provinceCode=23&cityCode=2121&districtCode=22467&townCode=54684&fullAddress=%e6%b5%b7%e5%8d%97%e6%b5%b7%e5%8f%a3%e5%b8%82%e9%be%99%e5%8d%8e%e5%8c%ba%e5%a4%a7%e5%90%8c%e8%a1%97%e9%81%93%e9%be%99%e6%98%86%e5%8c%97%e9%be%99%e9%98%b3%e8%b7%af%e6%9c%88%e6%9c%97%e6%96%b0%e6%9d%91%e4%b8%80%e4%b9%9d%e5%85%ab%e5%8f%b7&detailAddress=%e9%be%99%e6%98%86%e5%8c%97%e9%be%99%e9%98%b3%e8%b7%af%e6%9c%88%e6%9c%97%e6%96%b0%e6%9d%91%e4%b8%80%e4%b9%9d%e5%85%ab%e5%8f%b7&lng=110.32941&lat=20.02971&lbsData=GYWjLNREVeyJhZGRyZXNzSUQiOjAsInByb3ZpbmNlQ29kZSI6MjMsInByb3ZpbmNlIjoi5rW35Y2XIiwiY2l0eUNvZGUiOjIxMjEsImNpdHkiOiLmtbflj6PluIIiLCJkaXN0cmljdENvZGUiOjIyNDY3LCJkaXN0cmljdCI6Ium%20meWNjuWMuiIsInRvd25Db2RlIjo1NDY4NCwidG93biI6IuWkp%20WQjOihl%20mBkyIsImZ1bGxBZGRyZXNzIjoi5rW35Y2X5rW35Y%20j5biC6b6Z5Y2O5Yy65aSn5ZCM6KGX6YGT6b6Z5piG5YyX6b6Z6Ziz6Lev5pyI5pyX5paw5p2R5LiA5Lmd5YWr5Y%203IiwiZGV0YWlsQWRkcmVzcyI6Ium%20meaYhuWMl%20m%20memYs%20i3r%20aciOacl%20aWsOadkeS4gOS5neWFq%20WPtyIsImxuZyI6MTEwLjMyOTQxLCJsYXQiOjIwLjAyOTcxfQ==&hasChanged=1&utm_source=www.linkstars.com&utm_medium=tuiguang&utm_campaign=t_1000089893_156_0_184__afec29e17a35290e&utm_term=abffe119fd21419bbaa744e57589358c";
     signInList[customManClothSignInTag] = "https://3.cn/1zbj2J-m?_ts=1662191992537&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
+    signInList[beqingsongSignInTag] = "https://3.cn/1zzbTq-t?_ts=1663256106896&utm_source=iosapp&utm_medium=appshare&utm_campaign=t_335139774&utm_term=CopyURL&ad_od=share&utm_user=plusmember&gx=RnEwkTMIYWLZwtRW6sQiH03yqEI";
+    signInList[jingpinFavariteSignInTag] = "https://prodev.m.jd.com/mall/active/2JJSsGjdExwpjrf1TcMZnU5A6p5h/index.html?_ts=1663553866055&utm_user=plusmember&gx=RnFkwWNbbGfbytRP--sBCgntys0oZVFAD4g&ad_od=share&cu=true&utm_source=www.linkstars.com&utm_medium=tuiguang&utm_campaign=t_1000089893_156_0_184__98b3137a85fcc603&utm_term=d87965054ab44b9ea390049ef63de85c";
 
     Object.keys(signInList).forEach((tag) => {
         dailySignIn.signInTags.push(tag);
         var nowDate = new Date().Format("yyyy-MM-dd");
+        // if (tag == jingpinFavariteSignInTag) {
+        //     common.safeSet(nowDate + ":" + tag, null);
+        // }
         var done = common.safeGet(nowDate + ":" + tag);
+
         if (done != null) {
             log(tag + " 已做: " + done);
             return;
@@ -1326,8 +1364,8 @@ dailySignIn.doDailySignIn = function () {
     dailySignIn.signInTags.push(goldenRankCampBonusTag);
     doGoldenRankCampBonus();
 
-    dailySignIn.signInTags.push(searchContentAppreciatorSignInTag);
-    doSearchContentAppreciatorSignIn();
+    // dailySignIn.signInTags.push(searchContentAppreciatorSignInTag);
+    // doSearchContentAppreciatorSignIn();
 
     // dailySignIn.signInTags.push(shoeStoreSignInTag);
     // doShoeStoreSignIn();
