@@ -11,6 +11,7 @@ const shakeTag = "签到领京豆.摇京豆";
 
 const moreTasksBtn = "./Bean/moreTasksBtn.jpg";
 const pickupMetchantBtn = "./Bean/pickupMerchantBtn.jpg";
+const nutrientBottle = "./Bean/nutrientBottle.jpg";
 
 bean.dailyJobs = [];
 bean.dailyJobs.push(todayBeanTag);
@@ -348,7 +349,7 @@ doGetNutrientTasks = function (growthTips) {
         doPickupMerchantTasks(pickupMerchantTaskList);
     }
 
-    log("关闭营养液任务列表: " + click(growthTips.bounds().centerX(), growthTips.bounds().centerY()));
+    toastLog("关闭营养液任务列表: " + click(growthTips.bounds().centerX(), growthTips.bounds().centerY()));
 }
 
 getMyNutrients = function () {
@@ -357,35 +358,16 @@ getMyNutrients = function () {
     var newNextGetNutrientCheckTimestamp = new Date(tomorrow.Format("yyyy/MM/dd") + " 07:00:00").getTime();
     var startTick = new Date().getTime();
     for (;;) {
-        var nutrients = textMatches(/x\d+/).find();
-        log("营养液泡泡个数: " + nutrients.length);
-        nutrients.forEach(function(tv) {
-            var bubble = tv.parent().parent();
-            var title = bubble.child(bubble.childCount() - 1).text();
-            log(title + tv.text());
-            if (tv.text() != "x0") {
-                log("点击 " + title + tv.text() + ": " + click(tv.parent().bounds().centerX(), tv.parent().bounds().centerY()));
-                sleep(300);
-            } else {
-                bubble = tv.parent().parent().parent();
-                title = bubble.child(bubble.childCount() - 1).child(0).text();
-                log("营养液剩余时间: " + title)
-                if (/剩\d+:\d+:\d+/.test(title)) {
-                    var HHmmss = title.match(/\d+/g);
-                    if (HHmmss.length == 3) {
-                        newNextGetNutrientCheckTimestamp = new Date().getTime() + (Number(HHmmss[0]) * 3600 + Number(HHmmss[1]) * 60 + Number(HHmmss[2])) * 1000;
-                    } else {
-                        log("HHmmss: " + HHmmss);
-                    }
-                }
-            }
-        });
-
-        if (nutrients.length == 1 && nutrients[0].text() == "x0" || nutrients.length == 0) {
+        var nutrientBottlePt = common.findImageInRegion(nutrientBottle, 0, 0, device.width, device.height / 2);
+        if (nutrientBottlePt == null) {
+            toastLog("no 营养液");
             break;
         }
 
-        if (new Date().getTime() - startTick > 30 * 1000) {
+        toastLog("点击 营养液(" + nutrientBottlePt.x + ", " + nutrientBottlePt.y + "): " + click(nutrientBottlePt.x, nutrientBottlePt.y));
+        sleep(1000);
+
+        if (new Date().getTime() - startTick > 10 * 1000) {
             break;
         }
     }
@@ -427,26 +409,26 @@ getFriendsNutrients = function () {
         var tips = textMatches(/喊TA回来|可能认识的人/).visibleToUser(true).find();
         for (var j = 0; j < tips.length; j++) {
             var friendItem = tips[j].parent();
-            var nickname = friendItem.child(friendItem.childCount() - 2).text();
+            var nickname = friendItem.child(friendItem.childCount() - 3).text();
             //不能收取的childCount()==3
-            if (friendItem.childCount() == 5) {
-                var nutrientNum = parseInt(friendItem.child(2).child(0).text());
+            if (friendItem.childCount() == 4) {
+                var nutrientNum = parseInt(friendItem.child(3).child(1).text());
                 if (nutrientNum > 1) {
                     var clickRet = click(friendItem.bounds().centerX(), friendItem.bounds().centerY());
-                    log("点击 " + nickname + ": " + clickRet + ", 并等待 你收取Ta 出现, 15s超时");
-                    var getTaNutrientTips = common.waitForText("text", "你收取Ta", true, 15);
+                    log("点击 " + nickname + "x" + nutrientNum + ": " + clickRet + ", 并等待 你收取Ta 出现, 15s超时");
+                    var getTaNutrientTips = common.waitForText("textContains", "你收取Ta", true, 15);
                     if (getTaNutrientTips == null) {
+                        toastLog("no 你收取Ta");
                         return;
                     }
 
-                    var nutrient = textMatches(/x\d+/).visibleToUser(true).findOne(5000);
-                    if (nutrient == null) {
-                        return;
+                    var nutrientBottlePt = common.findImageInRegion(nutrientBottle, 0, 0, device.width, device.height / 2);
+                    if (nutrientBottlePt == null) {
+                        toastLog("no 营养液");
+                        break;
                     }
 
-                    clickRet = click(nutrient.parent().bounds().centerX(), nutrient.parent().bounds().centerY());
-
-                    log("收取 " + nickname + " " + nutrient.text() + ": " + clickRet);
+                    toastLog("点击 营养液(" + nutrientBottlePt.x + ", " + nutrientBottlePt.y + "): " + click(nutrientBottlePt.x, nutrientBottlePt.y));
                     sleep(1000);
                     back();
                     sleep(3000);
@@ -484,9 +466,9 @@ bean.doRoutine = function () {
         return;
     }
 
-    doGetNutrientTasks(growthTips);
-
     getMyNutrients();
+
+    doGetNutrientTasks(growthTips);
 
     getFriendsNutrients();
 
@@ -579,7 +561,7 @@ bean.doSignIn = function () {
         sleep(3000);
     }
 
-    actionBar = packageName("com.jingdong.app.mall").className("android.widget.HorizontalScrollView").findOne(1000);
+    actionBar = packageName(common.destPackageName).className("android.widget.HorizontalScrollView").findOne(1000);
     if (actionBar == null) {
         commonAction.backToAppMainPage();
         return;
