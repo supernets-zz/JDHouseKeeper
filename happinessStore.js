@@ -19,6 +19,8 @@ const dailyTasksCloseBtn = "./HappinessStore/dailyTasksCloseBtn.jpg";
 const subscribeAllBtn = "./HappinessStore/subscribeAllBtn.jpg";
 const addAllToCartBtn = "./HappinessStore/addAllToCartBtn.jpg";
 const activePresentBtn = "./HappinessStore/activePresentBtn.jpg";
+const beanCouponBtn = "./HappinessStore/beanCouponBtn.jpg";
+const dailyTasksDoneBtn = "./HappinessStore/dailyTasksDoneBtn.jpg";
 
 const blessingBagPt = [
     [60, 385], [275, 355], [565, 355],
@@ -183,6 +185,7 @@ getDailyPresent = function () {
 doDailyTasks = function () {
     log("happinessStore.doDailyTasks");
     var nowDate = new Date().Format("yyyy-MM-dd");
+    // common.safeSet(nowDate + ":" + dailyTasksTag, null);
     var done = common.safeGet(nowDate + ":" + dailyTasksTag);
     if (done != null) {
         log(dailyTasksTag + " 已做: " + done);
@@ -203,40 +206,24 @@ doDailyTasks = function () {
 
     var dailyTasksCloseBtnPt = common.waitForImageInRegion(dailyTasksCloseBtn, device.width * 3 / 4, 0, device.width / 4, device.height / 4, 5);
     if (dailyTasksCloseBtnPt == null) {
+        toastLog("no 关闭按钮")
         return;
-    }
-
-    for (var i = 0; i < 5; i++) {
-        var activePresentBtnPt = common.findImageInRegion(activePresentBtn, 0, 0, device.width, device.height / 2);
-        if (activePresentBtnPt != null) {
-            clickRet = click(activePresentBtnPt.x, activePresentBtnPt.y);
-            log("点击 活跃礼(" + activePresentBtnPt.x + ", " + activePresentBtnPt.y + "): " + clickRet);
-            sleep(3000);
-            clickRet = click(device.width / 2, device.height * 3 / 4);
-            log("点击 关闭(" + device.width / 2 + ", " + device.height * 3 / 4 + "): " + clickRet);
-            sleep(3000);
-        }
-        sleep(1000);
     }
 
     var subscribeAllCount = 0;
     for (;;) {
-        var todoBtnPt = common.findImageInRegion(todoBtn, device.width / 2, device.height / 2, device.width / 2, device.height / 2);
+        var todoBtnPt = common.findImageInRegion(todoBtn, device.width / 2, device.height / 4, device.width / 2, device.height * 3 / 4);
         if (todoBtnPt == null) {
-            common.safeSet(nowDate + ":" + dailyTasksTag, "done");
-            toastLog("完成 " + dailyTasksTag);
+            toastLog("no 立即完成")
             break;
         }
 
-        if (subscribeAllCount < 2) {
-            clickRet = click(dailyTasksCloseBtnPt.x - 97, dailyTasksCloseBtnPt.y + 62 * 5);
-        } else {
-            clickRet = click(dailyTasksCloseBtnPt.x - 97, dailyTasksCloseBtnPt.y + 62 * 8);
-        }
-        log("点击 立即完成|领取(" + (dailyTasksCloseBtnPt.x - 97) + ", " + (dailyTasksCloseBtnPt.y + 62 * 5) + "): " + clickRet);
+        clickRet = click(todoBtnPt.x, todoBtnPt.y);
         if (clickRet == false) {
             break;
         }
+
+        toastLog("点击 立即完成(" + todoBtnPt.x + ", " + todoBtnPt.y + "): " + clickRet);
 
         sleep(5000);
         var subscribeAllBtnPt = common.findImageInRegion(subscribeAllBtn, 0, device.height * 3 / 4, device.width, device.height / 4);
@@ -259,7 +246,49 @@ doDailyTasks = function () {
             }
             sleep(2000);
         }
+
         backToDailyTaskList();
+
+        if (subscribeAllCount < 2) {
+            clickRet = click(dailyTasksCloseBtnPt.x - 97, dailyTasksCloseBtnPt.y + 62 * 5);
+        } else {
+            clickRet = click(dailyTasksCloseBtnPt.x - 97, dailyTasksCloseBtnPt.y + 62 * 8);
+        }
+
+        toastLog("点击 领取(" + (dailyTasksCloseBtnPt.x - 97) + ", " + (dailyTasksCloseBtnPt.y + 62 * 5) + "): " + clickRet);
+        if (clickRet == false) {
+            break;
+        }
+        sleep(5000);
+    }
+
+    for (var i = 0; i < 4; i++) {
+        var activePresentBtnPt = common.findImageInRegion(activePresentBtn, 0, 0, device.width, device.height / 2);
+        if (activePresentBtnPt != null) {
+            clickRet = click(activePresentBtnPt.x, activePresentBtnPt.y);
+            toastLog("点击 活跃礼" + (i+1) + "(" + activePresentBtnPt.x + ", " + activePresentBtnPt.y + "): " + clickRet);
+            sleep(3000);
+            clickRet = click(device.width / 2, device.height * 3 / 4);
+            toastLog("点击 关闭(" + device.width / 2 + ", " + device.height * 3 / 4 + "): " + clickRet);
+            sleep(3000);
+        }
+        sleep(1000);
+    }
+
+    var beanCouponBtnPt = common.findImageInRegion(beanCouponBtn, 0, 0, device.width, device.height / 2);
+    if (beanCouponBtnPt != null) {
+        clickRet = click(beanCouponBtnPt.x, beanCouponBtnPt.y);
+        toastLog("点击 兑换券(" + beanCouponBtnPt.x + ", " + beanCouponBtnPt.y + "): " + clickRet);
+        sleep(3000);
+        clickRet = click(device.width / 2, device.height * 3 / 4);
+        toastLog("点击 关闭(" + device.width / 2 + ", " + device.height * 3 / 4 + "): " + clickRet);
+        sleep(3000);
+    }
+
+    var dailyTasksDoneBtnPt = common.findImageInRegion(dailyTasksDoneBtn, 0, 0, device.width, device.height / 2);
+    if (dailyTasksDoneBtnPt != null) {
+        common.safeSet(nowDate + ":" + dailyTasksTag, "done");
+        toastLog("完成 " + dailyTasksTag);
     }
 
     back();
@@ -289,7 +318,7 @@ doCollectBlessingBags = function () {
             sleep(2000);
         }
 
-        if (new Date().getTime() - startTick > 3 * 60 * 1000) {
+        if (new Date().getTime() - startTick > 60 * 1000) {
             break;
         }
     }
